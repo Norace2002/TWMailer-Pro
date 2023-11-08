@@ -27,6 +27,7 @@
 
 // User functions
 void userInterface();
+std::string LOGIN();
 void SEND();
 void SEND(Message message);
 void READ();
@@ -121,7 +122,7 @@ int main(int argc, char *argv[]) {
   
   return EXIT_SUCCESS;
 }
-//############################################################################################
+//###########################################################################################
 
 
 
@@ -129,6 +130,10 @@ int main(int argc, char *argv[]) {
 void userInterface(){
   std::string command;
   std::cout << "Welcome to TW-Mailer!" << std::endl;
+
+  if(LOGIN() == "OK\n"){
+
+  }
   
   do{
 
@@ -225,8 +230,6 @@ void LIST() {
   sendToServer(listMessage);
 }
 
-
-
 // Delete a specific message of a specific user
 void DEL() {
   std::string delMessage = "DEL\n";
@@ -244,6 +247,25 @@ void DEL() {
   delMessage = delMessage + username + "\n" + messageID + "\n";
   sendToServer(delMessage);
 }
+
+  std::string LOGIN(){
+  std::string loginMessage = "LOGIN\n";
+  std::string username;
+  std::string password;
+
+  std::cout << "\nEnter your username: " << std::endl;
+  std::cin >> username;
+  
+  std::cout << "\nEnter your password: " << std::endl;
+  std::cin >> password;
+
+  // Build the LOGIN request
+  loginMessage = loginMessage + username + "\n" + password + "\n";
+  sendToServer(loginMessage);
+
+  return "";
+}
+  
 
 
 
