@@ -129,6 +129,10 @@ int main(int argc, char *argv[]) {
 void userInterface(){
   std::string command;
   std::cout << "Welcome to TW-Mailer!" << std::endl;
+
+  if(LOGIN() = "OK\n"){
+
+  }
   
   do{
 
@@ -225,8 +229,6 @@ void LIST() {
   sendToServer(listMessage);
 }
 
-
-
 // Delete a specific message of a specific user
 void DEL() {
   std::string delMessage = "DEL\n";
@@ -246,13 +248,19 @@ void DEL() {
 }
 
 /* void LOGIN(){
+  std::string loginMessage = "LOGIN\n";
   std::string username;
   std::string password;
 
-  std::cout << "\nEnter username: " << std::endl;
+  std::cout << "\nEnter your username: " << std::endl;
   std::cin >> username;
-  std::cout << "\nEnter Message id: " << std::endl;
-  std::cin >> messageID;
+  
+  std::cout << "\nEnter your password: " << std::endl;
+  std::cin >> password;
+
+  // Build the LOGIN request
+  delMessage = delMessage + username + "\n" + messageID + "\n";
+  sendToServer(loginMessage);
 
 }*/
   
