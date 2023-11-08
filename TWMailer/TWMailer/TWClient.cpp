@@ -27,7 +27,10 @@
 
 // User functions
 void userInterface();
+<<<<<<< HEAD
 std::string LOGIN();
+=======
+>>>>>>> 24a3662ca1ca6169fade6a4171944cb35da9e869
 void SEND();
 void SEND(Message message);
 void READ();
@@ -131,7 +134,11 @@ void userInterface(){
   std::string command;
   std::cout << "Welcome to TW-Mailer!" << std::endl;
 
+<<<<<<< HEAD
   if(LOGIN() == "OK\n"){
+=======
+  if(LOGIN() = "OK\n"){
+>>>>>>> 24a3662ca1ca6169fade6a4171944cb35da9e869
 
   }
   
@@ -248,7 +255,11 @@ void DEL() {
   sendToServer(delMessage);
 }
 
+<<<<<<< HEAD
   std::string LOGIN(){
+=======
+/* std::string void LOGIN(){
+>>>>>>> 24a3662ca1ca6169fade6a4171944cb35da9e869
   std::string loginMessage = "LOGIN\n";
   std::string username;
   std::string password;
@@ -260,11 +271,19 @@ void DEL() {
   std::cin >> password;
 
   // Build the LOGIN request
+<<<<<<< HEAD
   loginMessage = loginMessage + username + "\n" + password + "\n";
   sendToServer(loginMessage);
 
   return "";
 }
+=======
+  delMessage = delMessage + username + "\n" + messageID + "\n";
+  sendToServer(loginMessage);
+
+  return "";
+}*/
+>>>>>>> 24a3662ca1ca6169fade6a4171944cb35da9e869
   
 
 
