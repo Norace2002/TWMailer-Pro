@@ -247,7 +247,7 @@ void DEL() {
   sendToServer(delMessage);
 }
 
-/* void LOGIN(){
+/* std::string void LOGIN(){
   std::string loginMessage = "LOGIN\n";
   std::string username;
   std::string password;
@@ -262,6 +262,7 @@ void DEL() {
   delMessage = delMessage + username + "\n" + messageID + "\n";
   sendToServer(loginMessage);
 
+  return "";
 }*/
   
 
