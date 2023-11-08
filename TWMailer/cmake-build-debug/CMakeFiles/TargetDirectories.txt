@@ -1,0 +1,3 @@
+C:/Users/ninor/Downloads/TWMailer/cmake-build-debug/CMakeFiles/TWMailer.dir
+C:/Users/ninor/Downloads/TWMailer/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/ninor/Downloads/TWMailer/cmake-build-debug/CMakeFiles/rebuild_cache.dir

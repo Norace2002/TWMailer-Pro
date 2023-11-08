@@ -1,0 +1,8 @@
+2. imlement LIST() ~~~~ make search modulo independent
+7. fix index bug (index not incrementing on assignment)
+8. delete ".\n" from end of server reply
+
+stretch goals
+- sanitize input to allow spaces in sender/receiver names
+- divide oversized messages into packets
+- username sanitizing (don't allow only numbers as name)
