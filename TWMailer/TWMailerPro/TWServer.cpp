@@ -87,14 +87,12 @@ int main(int argc, char *argv[]) {
   }
 
   // SET SOCKET OPTIONS - socket, level, optname, optvalue, optlen
-  if (setsockopt(create_socket, SOL_SOCKET, SO_REUSEADDR, &reuseValue,
-                 sizeof(reuseValue)) == -1) {
+  if (setsockopt(create_socket, SOL_SOCKET, SO_REUSEADDR, &reuseValue, sizeof(reuseValue)) == -1) {
     perror("set socket options - reuseAddr");
     return EXIT_FAILURE;
   }
 
-  if (setsockopt(create_socket, SOL_SOCKET, SO_REUSEPORT, &reuseValue,
-                 sizeof(reuseValue)) == -1) {
+  if (setsockopt(create_socket, SOL_SOCKET, SO_REUSEPORT, &reuseValue, sizeof(reuseValue)) == -1) {
     perror("set socket options - reusePort");
     return EXIT_FAILURE;
   }

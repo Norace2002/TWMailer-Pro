@@ -36,7 +36,7 @@ void DEL();
 void QUIT();
 void TEST();
 // Server functions
-void sendToServer(std::string serverCommand);
+std::string sendToServer(std::string serverCommand);
 // Debug funcctions
 void testMessageCreation();
 
@@ -129,19 +129,41 @@ int main(int argc, char *argv[]) {
 // Take User input
 void userInterface(){
   std::string command;
+  std::string loginReply;
+  bool isLoggedIn = false;
+
   std::cout << "Welcome to TW-Mailer!" << std::endl;
 
 
   //Try Login
-  for(int i = 0; i < 3; ++i){
-
-    if(LOGIN() == "OK\n"){
-      break;
+  while(isLoggedIn == false){
+    std::cout << "Valid commands are QUIT and LOGIN" << std::endl;
+    std::cout << ">> ";
+    std::cin >> command;
+    if(command == "LOGIN"){
+      loginReply = LOGIN();
+      if(loginReply == "OK\n"){
+        isLoggedIn = true;
+      }
+      else if(loginReply == "ERR\n"){
+        std::cout << "Login failed" << std::endl;
+      }
+      else if(loginReply == "LOCKED\n"){
+        std::cout << "You have been locked. Try again later." << std::endl;
+      }
+      else{
+        std::cout << "Server error: " << loginReply << std::endl;
+      }
+    }
+    else if (command == "QUIT") {
+      QUIT();
+      return;
     }
   }
   
-  do{
 
+  while (command != "QUIT"){
+    
     std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT. (and TEST)" << std::endl;
     std::cout << ">> ";
     std::cin >> command;
@@ -176,8 +198,7 @@ void userInterface(){
       std::cout << "\nPlease choose a valid input!" << std::endl;
       std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT." << std::endl;
     }    
-
-  } while (command != "QUIT");
+  };
 }
 
 
@@ -253,7 +274,7 @@ void DEL() {
   sendToServer(delMessage);
 }
 
-  std::string LOGIN(){
+std::string LOGIN(){
   std::string loginMessage = "LOGIN\n";
   std::string username;
   std::string password;
@@ -266,9 +287,7 @@ void DEL() {
 
   // Build the LOGIN request
   loginMessage = loginMessage + username + "\n" + password + "\n";
-  sendToServer(loginMessage);
-
-  return "";
+  return sendToServer(loginMessage);
 }
   
 
@@ -314,7 +333,7 @@ void TEST(){
 
 
 // Sends the input string to the server and listens to response
-void sendToServer(std::string serverCommand){
+std::string sendToServer(std::string serverCommand){
   char buffer[BUF];
   
   // Save command to buffer
@@ -337,30 +356,24 @@ void sendToServer(std::string serverCommand){
    // Send buffer to server
    if ((send(SOCKET, buffer, size, 0)) == -1) {
       perror("send error");
-      return;
+      return "send error";
    }
 
   // Answer from Server
    size = recv(SOCKET, buffer, BUF - 1, 0);
    if (size == -1){
       perror("recv error");
-      return;
+      return "recv error";
    }
    else if (size == 0){
       std::cout << "Server closed remote socket" << std::endl;
-      return;
+      return "Server closed remote socket";
    }
    else{
       std::cout << "\nServer Reply:" << std::endl;
       std::cout << buffer << std::endl;
-     
       buffer[size] = '\0';
-      
-    
-      if (strcmp("ERR\n", buffer) == 0){
-        fprintf(stderr, "<< Server error occured, abort\n");
-        return;
-      }
+      return buffer;
    }
 }
 
