@@ -7,10 +7,9 @@
 int getch()
 {
     int ch;
-    // https://man7.org/linux/man-pages/man3/termios.3.html
+
     struct termios t_old, t_new;
 
-    // https://man7.org/linux/man-pages/man3/termios.3.html
     // tcgetattr() gets the parameters associated with the object referred
     //   by fd and stores them in the termios structure referenced by
     //   termios_p
@@ -19,8 +18,6 @@ int getch()
     // copy old to new to have a base for setting c_lflags
     t_new = t_old;
 
-    // https://man7.org/linux/man-pages/man3/termios.3.html
-    //
     // ICANON Enable canonical mode (described below).
     //   * Input is made available line by line (max 4096 chars).
     //   * In noncanonical mode input is available immediately.
