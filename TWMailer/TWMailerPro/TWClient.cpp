@@ -131,8 +131,13 @@ void userInterface(){
   std::string command;
   std::cout << "Welcome to TW-Mailer!" << std::endl;
 
-  if(LOGIN() == "OK\n"){
 
+  //Try Login
+  for(int i = 0; i < 3; ++i){
+
+    if(LOGIN() == "OK\n"){
+      break;
+    }
   }
   
   do{
