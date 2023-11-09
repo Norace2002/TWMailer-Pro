@@ -10,4 +10,4 @@ TWServer: TWServer.cpp Message.o
 		g++ -std=c++14 -Wall -Werror -o twmailer-server TWServer.cpp Message.o
 
 clean:
-		rm -f twmailer-server twmailer-client Message.o
+		rm -f twmailer-server twmailer-client Message.o myldap.o
