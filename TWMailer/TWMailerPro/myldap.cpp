@@ -4,7 +4,7 @@
 #include <ldap.h>
 #include "mypw.h"
 
-std::string LDAP(std::string username, std::string password)
+std::string ldapAuthentication(std::string username, std::string password)
 {
    ////////////////////////////////////////////////////////////////////////////
    // LDAP config
