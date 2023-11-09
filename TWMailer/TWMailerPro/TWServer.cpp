@@ -36,6 +36,7 @@
 // Main Tasks
 std::string saveMsgToDB(Message MessageToSave);
 Message readMessageFromDB(int messageID, std::string filepath);
+std::string LOGIN(std::string username, std::string password);
 std::string LIST(std::string username);
 std::string READ(std::string username, std::string messageID);
 std::string DEL(std::string username, std::string messageID);
@@ -201,6 +202,7 @@ void *clientCommunication(void *data) {
     char delimiter = '\n';
     std::string command;
     std::string username;
+    std::string password;
     std::string messageID;
     std::string path;
     std::string responseMessage;
@@ -209,9 +211,15 @@ void *clientCommunication(void *data) {
     // Check sent command
     std::getline(ss, command, delimiter);
 
-    
+    // LOGIN
+    if (command == "LOGIN") {
+      std::getline(ss, username, delimiter);
+      std::getline(ss, password, delimiter);
+      responseMessage = LOGIN(username, password);
+      // in progress
+    }
     // SEND
-    if (command == "SEND") {
+    else if (command == "SEND") {
       Message ReceivedMessage(buffer);
       responseMessage = saveMsgToDB(ReceivedMessage);
     }
@@ -297,8 +305,22 @@ void signalHandler(int sig) {
     exit(sig);
   }
 }
+// Handles LOGIN request
+std::string LOGIN(std::string username, std::string password){
+  /*set global above loginTrys = 0;
 
-
+  if(LDAP(username, password) == "OK\n"){
+    set login token to true... 
+    return "OK\n";
+  }
+  ++loginTrys;
+   
+  if(logintrys >= 3){
+    return "LOCKED\n";
+  }
+  return "ERR\n";
+  */
+}
 
 // Handles LIST request
 // Returns:
