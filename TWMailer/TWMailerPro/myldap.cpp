@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include <string.h>
+#include <string>
 #include <stdlib.h>
 #include <ldap.h>
 #include "mypw.h"
 
-int main(int argc, char *argv[])
+std::string LDAP()
 {
    ////////////////////////////////////////////////////////////////////////////
    // LDAP config
@@ -15,6 +15,10 @@ int main(int argc, char *argv[])
    // read username (bash: export ldapuser=<yourUsername>)
    char ldapBindUser[256];
    char rawLdapUser[128];
+   // TODO: ^^save function input into these two^^
+
+
+   /*
    if (argc >= 3 && strcmp(argv[1], "--user") == 0)
    {
       strcpy(rawLdapUser, argv[2]);
@@ -35,9 +39,13 @@ int main(int argc, char *argv[])
          printf("user based on environment variable ldapuser set to: %s\n", ldapBindUser);
       }
    }
+   */
+
 
    // read password (bash: export ldappw=<yourPW>)
    char ldapBindPassword[256];
+
+   /*
    if (argc == 4 && strcmp(argv[3], "--pw") == 0)
    {
       strcpy(ldapBindPassword, getpass());
@@ -57,7 +65,9 @@ int main(int argc, char *argv[])
          printf("pw taken over from environment variable ldappw\n");
       }
    }
+   */
 
+  
    // search settings
    const char *ldapSearchBaseDomainComponent = "dc=technikum-wien,dc=at";
    const char *ldapSearchFilter = "(uid=if19b00*)";
