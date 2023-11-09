@@ -4,7 +4,7 @@
 #include <ldap.h>
 #include "mypw.h"
 
-std::string LDAP()
+std::string LDAP(std::string username, std::string password)
 {
    ////////////////////////////////////////////////////////////////////////////
    // LDAP config
@@ -13,61 +13,25 @@ std::string LDAP()
    const int ldapVersion = LDAP_VERSION3;
 
    // read username (bash: export ldapuser=<yourUsername>)
-   char ldapBindUser[256];
+   char ldapBindUser[256]; // TODO: understand usage
    char rawLdapUser[128];
-   // TODO: ^^save function input into these two^^
 
-
-   /*
-   if (argc >= 3 && strcmp(argv[1], "--user") == 0)
-   {
-      strcpy(rawLdapUser, argv[2]);
-      sprintf(ldapBindUser, "uid=%s,ou=people,dc=technikum-wien,dc=at", rawLdapUser);
-      printf("user set to: %s\n", ldapBindUser);
-   }
-   else
-   {
-      const char *rawLdapUserEnv = getenv("ldapuser");
-      if (rawLdapUserEnv == NULL)
-      {
-         printf("(user not found... set to empty string)\n");
-         strcpy(ldapBindUser, "");
-      }
-      else
-      {
-         sprintf(ldapBindUser, "uid=%s,ou=people,dc=technikum-wien,dc=at", rawLdapUserEnv);
-         printf("user based on environment variable ldapuser set to: %s\n", ldapBindUser);
-      }
-   }
-   */
+   // Save function input to char array
+   strncpy(rawLdapUser, username.c_str(), sizeof(rawLdapUser));
+   // Complete c String by using a  "\0"
+   rawLdapUser[sizeof(rawLdapUser) - 1] = '\0';
+   sprintf(ldapBindUser, "uid=%s,ou=people,dc=technikum-wien,dc=at", rawLdapUser);
 
 
    // read password (bash: export ldappw=<yourPW>)
    char ldapBindPassword[256];
+   // Save function input to char array
+   strncpy(ldapBindPassword, password.c_str(), sizeof(ldapBindPassword));
+   // Complete c String by using a  "\0"
+   ldapBindPassword[sizeof(ldapBindPassword) - 1] = '\0';
 
-   /*
-   if (argc == 4 && strcmp(argv[3], "--pw") == 0)
-   {
-      strcpy(ldapBindPassword, getpass());
-      printf("pw taken over from commandline\n");
-   }
-   else
-   {
-      const char *ldapBindPasswordEnv = getenv("ldappw");
-      if (ldapBindPasswordEnv == NULL)
-      {
-         strcpy(ldapBindPassword, "");
-         printf("(pw not found... set to empty string)\n");
-      }
-      else
-      {
-         strcpy(ldapBindPassword, ldapBindPasswordEnv);
-         printf("pw taken over from environment variable ldappw\n");
-      }
-   }
-   */
 
-  
+
    // search settings
    const char *ldapSearchBaseDomainComponent = "dc=technikum-wien,dc=at";
    const char *ldapSearchFilter = "(uid=if19b00*)";
@@ -85,7 +49,7 @@ std::string LDAP()
    if (rc != LDAP_SUCCESS)
    {
       fprintf(stderr, "ldap_init failed\n");
-      return EXIT_FAILURE;
+      return 0;
    }
    printf("connected to LDAP server %s\n", ldapUri);
 
@@ -101,7 +65,7 @@ std::string LDAP()
       // https://www.openldap.org/software/man.cgi?query=ldap_err2string&sektion=3&apropos=0&manpath=OpenLDAP+2.4-Release
       fprintf(stderr, "ldap_set_option(PROTOCOL_VERSION): %s\n", ldap_err2string(rc));
       ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return EXIT_FAILURE;
+      return 0;
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -128,7 +92,7 @@ std::string LDAP()
    {
       fprintf(stderr, "ldap_start_tls_s(): %s\n", ldap_err2string(rc));
       ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return EXIT_FAILURE;
+      return 0;
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -161,100 +125,8 @@ std::string LDAP()
    {
       fprintf(stderr, "LDAP bind error: %s\n", ldap_err2string(rc));
       ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return EXIT_FAILURE;
+      return 0;
    }
-
-   ////////////////////////////////////////////////////////////////////////////
-   // perform ldap search
-   // https://linux.die.net/man/3/ldap_search_ext_s
-   // _s : synchronous
-   // int ldap_search_ext_s(
-   //     LDAP *ld,
-   //     char *base,
-   //     int scope,
-   //     char *filter,
-   //     char *attrs[],
-   //     int attrsonly,
-   //     LDAPControl **serverctrls,
-   //     LDAPControl **clientctrls,
-   //     struct timeval *timeout,
-   //     int sizelimit,
-   //     LDAPMessage **res );
-   LDAPMessage *searchResult;
-   rc = ldap_search_ext_s(
-       ldapHandle,
-       ldapSearchBaseDomainComponent,
-       ldapSearchScope,
-       ldapSearchFilter,
-       (char **)ldapSearchResultAttributes,
-       0,
-       NULL,
-       NULL,
-       NULL,
-       500,
-       &searchResult);
-   if (rc != LDAP_SUCCESS)
-   {
-      fprintf(stderr, "LDAP search error: %s\n", ldap_err2string(rc));
-      ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return EXIT_FAILURE;
-   }
-   // https://linux.die.net/man/3/ldap_count_entries
-   printf("Total results: %d\n", ldap_count_entries(ldapHandle, searchResult));
-
-   ////////////////////////////////////////////////////////////////////////////
-   // get result of search
-   // https://linux.die.net/man/3/ldap_first_entry
-   // https://linux.die.net/man/3/ldap_next_entry
-   LDAPMessage *searchResultEntry;
-   for (searchResultEntry = ldap_first_entry(ldapHandle, searchResult);
-        searchResultEntry != NULL;
-        searchResultEntry = ldap_next_entry(ldapHandle, searchResultEntry))
-   {
-      /////////////////////////////////////////////////////////////////////////
-      // Base Information of the search result entry
-      // https://linux.die.net/man/3/ldap_get_dn
-      printf("DN: %s\n", ldap_get_dn(ldapHandle, searchResultEntry));
-
-      /////////////////////////////////////////////////////////////////////////
-      // Attributes
-      // https://linux.die.net/man/3/ldap_first_attribute
-      // https://linux.die.net/man/3/ldap_next_attribute
-      //
-      // berptr: berptr, a pointer to a BerElement it has allocated to keep
-      //         track of its current position. This pointer should be passed
-      //         to subsequent calls to ldap_next_attribute() and is used to
-      //         effectively step through the entry's attributes.
-      BerElement *ber;
-      char *searchResultEntryAttribute;
-      for (searchResultEntryAttribute = ldap_first_attribute(ldapHandle, searchResultEntry, &ber);
-           searchResultEntryAttribute != NULL;
-           searchResultEntryAttribute = ldap_next_attribute(ldapHandle, searchResultEntry, ber))
-      {
-         BerValue **vals;
-         if ((vals = ldap_get_values_len(ldapHandle, searchResultEntry, searchResultEntryAttribute)) != NULL)
-         {
-            for (int i = 0; i < ldap_count_values_len(vals); i++)
-            {
-               printf("\t%s: %s\n", searchResultEntryAttribute, vals[i]->bv_val);
-            }
-            ldap_value_free_len(vals);
-         }
-
-         // free memory
-         ldap_memfree(searchResultEntryAttribute);
-      }
-      // free memory
-      if (ber != NULL)
-      {
-         ber_free(ber, 0);
-      }
-
-      printf("\n");
-   }
-
-   // free memory
-   ldap_msgfree(searchResult);
 
    ////////////////////////////////////////////////////////////////////////////
    // https://linux.die.net/man/3/ldap_unbind_ext_s
@@ -264,5 +136,5 @@ std::string LDAP()
    //       LDAPControl *cctrls[]);
    ldap_unbind_ext_s(ldapHandle, NULL, NULL);
 
-   return EXIT_SUCCESS;
+   return 0;
 }
