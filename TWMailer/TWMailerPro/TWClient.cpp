@@ -111,11 +111,11 @@ int main(int argc, char *argv[]) {
   if (SOCKET != -1)
   {
     if (shutdown(SOCKET, SHUT_RDWR) == -1){
-       // invalid in case the server is gone already
-       perror("shutdown create_socket"); 
+      // invalid in case the server is gone already
+      perror("shutdown create_socket"); 
     }
     if (close(SOCKET) == -1){
-       perror("close create_socket");
+      perror("close create_socket");
     }
     SOCKET = -1;
   }
@@ -342,39 +342,39 @@ std::string sendToServer(std::string serverCommand){
   buffer[sizeof(buffer) - 1] = '\0';
   
   int size = strlen(buffer);
-   // Remove newline from string at the end
-   if (buffer[size - 2] == '\r' && buffer[size - 1] == '\n'){
-      size -= 2;
-      buffer[size] = 0;
-   }
-   else if (buffer[size - 1] == '\n'){
-      --size;
-      buffer[size] = 0;
-   }
+  // Remove newline from string at the end
+  if (buffer[size - 2] == '\r' && buffer[size - 1] == '\n'){
+    size -= 2;
+    buffer[size] = 0;
+  }
+  else if (buffer[size - 1] == '\n'){
+    --size;
+    buffer[size] = 0;
+  }
 
 
-   // Send buffer to server
-   if ((send(SOCKET, buffer, size, 0)) == -1) {
-      perror("send error");
-      return "send error";
-   }
+  // Send buffer to server
+  if ((send(SOCKET, buffer, size, 0)) == -1) {
+    perror("send error");
+    return "send error";
+  }
 
   // Answer from Server
-   size = recv(SOCKET, buffer, BUF - 1, 0);
-   if (size == -1){
-      perror("recv error");
-      return "recv error";
-   }
-   else if (size == 0){
-      std::cout << "Server closed remote socket" << std::endl;
-      return "Server closed remote socket";
-   }
-   else{
-      std::cout << "\nServer Reply:" << std::endl;
-      std::cout << buffer << std::endl;
-      buffer[size] = '\0';
-      return buffer;
-   }
+  size = recv(SOCKET, buffer, BUF - 1, 0);
+  if (size == -1){
+    perror("recv error");
+    return "recv error";
+  }
+  else if (size == 0){
+    std::cout << "Server closed remote socket" << std::endl;
+    return "Server closed remote socket";
+  }
+  else{
+    std::cout << "\nServer Reply:" << std::endl;
+    std::cout << buffer << std::endl;
+    buffer[size] = '\0';
+    return buffer;
+  }
 }
 
 
