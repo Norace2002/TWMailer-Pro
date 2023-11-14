@@ -32,12 +32,12 @@ std::string ldapAuthentication(std::string username, std::string password)
 
 
 
-   // search settings
+   /* search settings
    const char *ldapSearchBaseDomainComponent = "dc=technikum-wien,dc=at";
    const char *ldapSearchFilter = "(uid=if19b00*)";
    ber_int_t ldapSearchScope = LDAP_SCOPE_SUBTREE;
    const char *ldapSearchResultAttributes[] = {"uid", "cn", NULL};
-
+   */
    // general
    int rc = 0; // return code
 

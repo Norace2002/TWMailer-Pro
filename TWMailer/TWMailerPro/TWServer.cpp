@@ -320,6 +320,7 @@ std::string LOGIN(std::string username, std::string password){
   }
   return "ERR\n";
   */
+ return "Test";
 }
 
 // Handles LIST request
