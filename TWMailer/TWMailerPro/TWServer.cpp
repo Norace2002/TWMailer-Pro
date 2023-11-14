@@ -307,6 +307,7 @@ void signalHandler(int sig) {
 }
 // Handles LOGIN request
 std::string LOGIN(std::string username, std::string password){
+  printf("hat geklappt");
   /*set global above loginTrys = 0;
 
   if(LDAP(username, password) == "OK\n"){
