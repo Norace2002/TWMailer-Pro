@@ -46,8 +46,8 @@ Message::Message(){
   }
   
   // Get user input data
-  std::cout << "\nSender: " << std::endl;
-  sender = this->getInputString(60);
+  //std::cout << "\nSender: " << std::endl;
+  //sender = this->getInputString(60);
   std::cout << "\nReceiver: " << std::endl;
   receiver = this->getInputString(60);
   std::cout << "\nSubject: " << std::endl;
