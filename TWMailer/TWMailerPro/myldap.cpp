@@ -1,8 +1,4 @@
-#include <stdio.h>
-#include <string>
-#include <stdlib.h>
-#include <ldap.h>
-#include "mypw.h"
+#include "myldap.h"
 
 std::string ldapAuthentication(std::string username, std::string password)
 {
@@ -49,7 +45,7 @@ std::string ldapAuthentication(std::string username, std::string password)
    if (rc != LDAP_SUCCESS)
    {
       fprintf(stderr, "ldap_init failed\n");
-      return 0;
+      return "ERR\n";
    }
    printf("connected to LDAP server %s\n", ldapUri);
 
@@ -65,7 +61,7 @@ std::string ldapAuthentication(std::string username, std::string password)
       // https://www.openldap.org/software/man.cgi?query=ldap_err2string&sektion=3&apropos=0&manpath=OpenLDAP+2.4-Release
       fprintf(stderr, "ldap_set_option(PROTOCOL_VERSION): %s\n", ldap_err2string(rc));
       ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return 0;
+      return "ERR\n";
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -92,7 +88,7 @@ std::string ldapAuthentication(std::string username, std::string password)
    {
       fprintf(stderr, "ldap_start_tls_s(): %s\n", ldap_err2string(rc));
       ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return 0;
+      return "ERR\n";
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -125,7 +121,7 @@ std::string ldapAuthentication(std::string username, std::string password)
    {
       fprintf(stderr, "LDAP bind error: %s\n", ldap_err2string(rc));
       ldap_unbind_ext_s(ldapHandle, NULL, NULL);
-      return 0;
+      return "ERR\n";
    }
 
    ////////////////////////////////////////////////////////////////////////////
@@ -136,5 +132,5 @@ std::string ldapAuthentication(std::string username, std::string password)
    //       LDAPControl *cctrls[]);
    ldap_unbind_ext_s(ldapHandle, NULL, NULL);
 
-   return 0;
+   return "OK\n";
 }

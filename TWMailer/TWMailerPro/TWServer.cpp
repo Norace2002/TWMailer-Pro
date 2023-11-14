@@ -32,6 +32,9 @@
 // Message class
 #include "Message.h"
 
+// LDAP includes
+#include "myldap.h"
+
 
 // Main Tasks
 std::string saveMsgToDB(Message MessageToSave);
@@ -57,6 +60,8 @@ int abortRequested = 0;
 int create_socket = -1;
 int new_socket = -1;
 std::string rootDirectory = "./";
+int loginTrys = 0;// TODO delete later
+bool isLogginIn = false; // TODO delete later
 
 //Input format: twmailer-server <port> <directory>
 //Test  command ./twmailer-server 6543 ./MessageDB
@@ -216,7 +221,6 @@ void *clientCommunication(void *data) {
       std::getline(ss, username, delimiter);
       std::getline(ss, password, delimiter);
       responseMessage = LOGIN(username, password);
-      // in progress
     }
     // SEND
     else if (command == "SEND") {
@@ -307,21 +311,21 @@ void signalHandler(int sig) {
 }
 // Handles LOGIN request
 std::string LOGIN(std::string username, std::string password){
-  printf("hat geklappt");
-  /*set global above loginTrys = 0;
+  std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
 
-  if(LDAP(username, password) == "OK\n"){
-    set login token to true... 
+  if(ldapAuthentication(username, password) == "OK\n"){
+
+    isLogginIn = true;
+
     return "OK\n";
   }
   ++loginTrys;
    
-  if(logintrys >= 3){
+  if(loginTrys >= 3){
     return "LOCKED\n";
   }
   return "ERR\n";
-  */
- return "Test";
+
 }
 
 // Handles LIST request
