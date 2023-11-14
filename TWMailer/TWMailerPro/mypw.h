@@ -5,4 +5,4 @@
 #include <string>
 
 int getch();
-const char* getpass();
+std::string getpass();

@@ -276,8 +276,6 @@ std::string LOGIN(){
   //get password - invisible
   password = getpass();
 
-  std::cout << "Password: " << password << std::endl;
-
   // Build the LOGIN request
   loginMessage = loginMessage + username + "\n" + password + "\n";
   return sendToServer(loginMessage);

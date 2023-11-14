@@ -33,9 +33,9 @@ int getch()
     return ch;
 }
 
-const char *getpass()
+std::string getpass()
 {
-    int show_asterisk = 0;
+    int show_asterisk = 1;
 
     const char BACKSPACE = 127;
     const char RETURN = 10;
@@ -70,5 +70,6 @@ const char *getpass()
         }
     }
     printf("\n");
-    return password.c_str();
+    std::cout << "Password: " << password << std::endl;
+    return password;
 }
