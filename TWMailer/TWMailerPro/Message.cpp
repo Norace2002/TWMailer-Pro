@@ -46,8 +46,8 @@ Message::Message(){
   }
   
   // Get user input data
-  //std::cout << "\nSender: " << std::endl;
-  //sender = this->getInputString(60);
+
+  sender = "placeholder";
   std::cout << "\nReceiver: " << std::endl;
   receiver = this->getInputString(60);
   std::cout << "\nSubject: " << std::endl;
@@ -170,10 +170,6 @@ std::string Message::getInputString(long unsigned int length){
 // Checks whether all values are set (except for messageID)
 bool Message::messageVerify(){
   bool isValid = true;
-  if(sender == ""){
-    std::cout << "Sender is empty" << std::endl;
-    isValid = false;
-  }
   if(receiver == ""){
     std::cout << "Receiver is empty" << std::endl;
     isValid = false;

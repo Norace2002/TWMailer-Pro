@@ -43,7 +43,9 @@ const char *getpass()
     unsigned char ch = 0;
     std::string password;
 
-    printf("Password: ");
+    printf("Enter your password: ");
+
+    getch();
 
     while ((ch = getch()) != RETURN)
     {

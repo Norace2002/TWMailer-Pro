@@ -225,27 +225,24 @@ void *clientCommunication(void *data) {
     // SEND
     else if (command == "SEND") {
       Message ReceivedMessage(buffer);
+      ReceivedMessage.setSender(username);
       responseMessage = saveMsgToDB(ReceivedMessage);
     }
     // LIST
     else if (command == "LIST") {
       // Extract username
-      std::getline(ss, username, delimiter);
       responseMessage = LIST(username);
     }
     // READ
     else if (command == "READ") {
       // Extract username and messageID
-      std::getline(ss, username, delimiter);
       std::getline(ss, messageID, delimiter);
       responseMessage = READ(username, messageID);
     }
     // DEL
     else if (command == "DEL") {
-      std::getline(ss, username, delimiter);
       std::getline(ss, messageID, delimiter);
       responseMessage = DEL(username, messageID);
-      // in progress
     }
 
 

@@ -226,18 +226,15 @@ void SEND(Message message) {
 // Display a specific message of a specific user
 void READ() { std::cout << "\n"; 
   std::string readMessage = "READ\n";
-  std::string username;
   std::string messageID;
 
   // Get Input
-  std::cout << "\nDislpays a specific message of a user." << std::endl;
-  std::cout << "\nEnter username: " << std::endl;
-  std::cin >> username;
+  std::cout << "\nDislpays a specific message." << std::endl;
   std::cout << "\nEnter Message id: " << std::endl;
   std::cin >> messageID;
 
   // Build the READ request
-  readMessage = readMessage + username + "\n" + messageID + "\n";
+  readMessage = readMessage + messageID + "\n";
   sendToServer(readMessage);
 }
 
@@ -246,33 +243,23 @@ void READ() { std::cout << "\n";
 // List all messages of a specific user
 void LIST() {
   std::string listMessage = "LIST\n";
-  std::string username;
 
-  // Get Input
-  std::cout << "\ndislpay a list of messages of a specific user." << std::endl;
-  std::cout << "\nEnter username: " << std::endl;
-  std::cin >> username;
-  
   // Build the LIST request
-  listMessage = listMessage + username + "\n";
   sendToServer(listMessage);
 }
 
 // Delete a specific message of a specific user
 void DEL() {
   std::string delMessage = "DEL\n";
-  std::string username;
   std::string messageID;
 
   // Get Input
-  std::cout << "\ndelete a specific message of a specific user" << std::endl;
-  std::cout << "\nUsername: " << std::endl;
-  std::cin >> username;
+  std::cout << "\ndelete a specific message" << std::endl;
   std::cout << "\nMessage Number: " << std::endl;
   std::cin >> messageID;
 
   // Build the DEL request
-  delMessage = delMessage + username + "\n" + messageID + "\n";
+  delMessage = delMessage + messageID + "\n";
   sendToServer(delMessage);
 }
 
@@ -283,9 +270,13 @@ std::string LOGIN(){
 
   std::cout << "\nEnter your username: " << std::endl;
   std::cin >> username;
+
+  std::cin.clear();
   
-  std::cout << "\nEnter your password: " << std::endl;
-  std::cin >> password;
+  //get password - invisible
+  password = getpass();
+
+  std::cout << "Password: " << password << std::endl;
 
   // Build the LOGIN request
   loginMessage = loginMessage + username + "\n" + password + "\n";
