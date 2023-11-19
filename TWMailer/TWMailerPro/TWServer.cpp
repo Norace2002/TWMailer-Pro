@@ -186,12 +186,9 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   int size;
   int *current_socket = (int *)data;
 
-<<<<<<< HEAD
   int loginTries = 0;// TODO delete later
   bool isLoggedIn = false; // TODO delete later
 
-=======
->>>>>>> f704b03dc71dca883cd592dd6ee4903ee0e38793
   // SEND welcome message
   strcpy(buffer, "Connection to Server successful\r\n");
   if (send(*current_socket, buffer, strlen(buffer), 0) == -1) {
