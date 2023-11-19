@@ -29,7 +29,9 @@
 
 // User functions
 void userInterface();
+void userInterface2();
 std::string LOGIN();
+bool isLoggedIn();
 void SEND();
 void SEND(Message message);
 void READ();
@@ -106,7 +108,7 @@ int main(int argc, char *argv[]) {
   }
   
   // Client-Server communication - Send prepared command to server
-  userInterface();
+  userInterface2();
 
   
   // CLOSES THE DESCRIPTOR
@@ -173,7 +175,6 @@ void userInterface(){
     // SEND
     if (command == "SEND") {
       SEND();
-
     }
     // LIST
     else if (command == "LIST") {
@@ -204,6 +205,91 @@ void userInterface(){
 }
 
 
+
+
+// Take User input
+void userInterface2(){
+  std::string command;
+  std::string loginReply;
+
+  std::cout << "Welcome to TW-Mailer!" << std::endl;
+
+  while (command != "QUIT"){
+    if(isLoggedIn() == false){
+      std::cout << "Valid commands are QUIT and LOGIN" << std::endl;
+      std::cout << ">> ";
+      std::cin >> command;
+      if(command == "LOGIN"){
+        loginReply = LOGIN();
+        if(loginReply == "OK\n"){
+          std::cout << "Login successful!" << std::endl;
+        }
+        else if(loginReply == "ERR\n"){
+          std::cout << "Login failed" << std::endl;
+        }
+        else if(loginReply == "LOCKED\n"){
+          std::cout << "You have been locked. Try again later." << std::endl;
+        }
+        else{
+          std::cout << "Server error: " << loginReply << std::endl;
+        }
+      }
+      else if (command == "QUIT") {
+        QUIT();
+        return;
+      }
+    }
+    else{
+      std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT. (and TEST)" << std::endl;
+      std::cout << ">> ";
+      std::cin >> command;
+
+      // SEND
+      if (command == "SEND") {
+        SEND();
+      }
+      // LIST
+      else if (command == "LIST") {
+        LIST();
+      }
+      // READ
+      else if (command == "READ") {
+        READ();
+      }
+      // DEL
+      else if (command == "DEL") {
+        DEL();
+      }
+      // QUIT
+      else if (command == "QUIT") {
+        QUIT();
+      }
+      // TEST
+      else if (command == "TEST") {
+        TEST();
+      }
+      // Invalid input
+      else {
+        std::cout << "\nPlease choose a valid input!" << std::endl;
+        std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT." << std::endl;
+      } 
+    } 
+  };
+}
+
+
+//checks if user is logged in with verified credentials on server
+bool isLoggedIn(){
+  std::string response = sendToServer("LOGINSTATUS\n");
+
+  if(response == "LOCKED\n"){
+    return false;
+  }
+  else if(response == "VERIFIED\n"){
+    return true;
+  }
+  return false;
+}
 
 // Create a new message and send it to the server
 void SEND() {

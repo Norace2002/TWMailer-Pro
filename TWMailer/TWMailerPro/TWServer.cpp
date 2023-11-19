@@ -42,7 +42,7 @@
 bool prepareDirectory();
 std::string saveMsgToDB(Message MessageToSave);
 Message readMessageFromDB(int messageID, std::string filepath);
-std::string LOGIN(std::string username, std::string password, char clientIP[INET_ADDRSTRLEN]);
+std::string LOGIN(std::string username, std::string password, char clientIP[INET_ADDRSTRLEN], bool& isLoggedIn, int& loginTries);
 std::string LIST(std::string username);
 std::string READ(std::string username, std::string messageID);
 std::string DEL(std::string username, std::string messageID);
@@ -67,8 +67,6 @@ int abortRequested = 0;
 int create_socket = -1;
 int new_socket = -1;
 std::string mailSpool = "./";
-int loginTries = 0;// TODO delete later
-bool isLogginIn = false; // TODO delete later
 
 //Input format: twmailer-server <port> <directory>
 //Test  command ./twmailer-server 6543 ./MessageDB
@@ -185,9 +183,13 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   char buffer[BUF];
   int size;
   int *current_socket = (int *)data;
+  int loginTries = 0;
+  bool isLoggedIn = false;
 
-  int loginTries = 0;// TODO delete later
-  bool isLoggedIn = false; // TODO delete later
+  std::string username;
+
+  
+
 
   // SEND welcome message
   strcpy(buffer, "Connection to Server successful\r\n");
@@ -224,6 +226,7 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     }
 
     buffer[size] = '\0';
+    //TODO: remove debug
     std::cout << "Message received: " << buffer << "\n" << std::endl;
 
     // Server Logic --------------------------------------------
@@ -236,7 +239,6 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     std::string path;
     std::string responseMessage;
     char responseCharArray[1000];
-
     // Check sent command
     std::getline(ss, command, delimiter);
 
@@ -244,12 +246,16 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     if (command == "LOGIN") {
       std::getline(ss, username, delimiter);
       std::getline(ss, password, delimiter);
-      responseMessage = LOGIN(username, password, clientIP);
+      responseMessage = LOGIN(username, password, clientIP, isLoggedIn, loginTries);
     }
     // SEND
     else if (command == "SEND") {
       Message ReceivedMessage(buffer);
+      //TODO: remove Debug
+      std::cout << "Username of sender: " << username << std::endl;
       ReceivedMessage.setSender(username);
+      //TODO: remove Debug
+      std::cout << "Sender in Message Object: " << ReceivedMessage.getSender() << std::endl;
       responseMessage = saveMsgToDB(ReceivedMessage);
     }
     // LIST
@@ -267,6 +273,14 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     else if (command == "DEL") {
       std::getline(ss, messageID, delimiter);
       responseMessage = DEL(username, messageID);
+    }
+    else if (command == "LOGINSTATUS"){
+      if(isLoggedIn){
+        responseMessage = "VERIFIED\n";
+      }
+      else{
+        responseMessage = "LOCKED\n";
+      }
     }
 
 
@@ -334,34 +348,33 @@ void signalHandler(int sig) {
 
 
 // Handles LOGIN request
-std::string LOGIN(std::string username, std::string password, char clientIP_char[INET_ADDRSTRLEN]){
+std::string LOGIN(std::string username, std::string password, char clientIP_char[INET_ADDRSTRLEN], bool& isLoggedIn, int& loginTries ){
   std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
   std::string clientIP = clientIP_char;
 
-if(!isBlacklisted(clientIP)){
-  if(ldapAuthentication(username, password) == "OK\n"){
+  if(!isBlacklisted(clientIP)){
+    if(ldapAuthentication(username, password) == "OK\n"){
 
-    isLogginIn = true;
+      isLoggedIn = true;
 
-    return "OK\n";
+      return "OK\n";
+    }
+    ++loginTries;
+    
+    if(loginTries >= 1){
+      // write to blacklist when mutex is unlocked
+      blacklistMutex.lock();
+      blacklist(clientIP);
+      blacklistMutex.unlock();
+
+      loginTries = 0;
+      return "LOCKED\n";
+    }
+    return "ERR\n";
   }
-  ++loginTries;
-   
-  if(loginTries >= 1){
-    // write to blacklist when mutex is unlocked
-    blacklistMutex.lock();
-    blacklist(clientIP);
-    blacklistMutex.unlock();
-
-    loginTries = 0;
+  else{
     return "LOCKED\n";
   }
-  return "ERR\n";
-}
-else{
-  std::cout << "on blacklist" << std::endl;
-  return "LOCKED\n";
-}
 
 }
 
