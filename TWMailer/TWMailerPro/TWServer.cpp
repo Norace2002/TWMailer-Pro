@@ -15,6 +15,7 @@
 
 // Thread includes
 #include <thread>
+#include <mutex>
 
 // Folder navigation Linux
 #include <dirent.h>
@@ -57,6 +58,8 @@ int newMessageID(Message message);
 void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]);
 void signalHandler(int sig);
 
+//Mutexes
+std::mutex blacklistMutex;
 
 // Buffer & Globals
 #define BUF 1024
@@ -152,8 +155,10 @@ int main(int argc, char *argv[]) {
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(cliaddress.sin_addr), clientIP, INET_ADDRSTRLEN);
     std::cout << "Client connected from IP: " << clientIP << std::endl;
-
-    clientCommunication(&new_socket, clientIP);
+    
+    std::thread clientThread(clientCommunication, &new_socket, clientIP);
+    clientThread.detach();  // Thread freigeben, um Ressourcen zu verwalten
+    
     new_socket = -1;
   }
 
@@ -338,8 +343,11 @@ if(!isBlacklisted(clientIP)){
   ++loginTries;
    
   if(loginTries >= 1){
-    // write to blacklist
+    // write to blacklist when mutex is unlocked
+    blacklistMutex.lock();
     blacklist(clientIP);
+    blacklistMutex.unlock();
+
     loginTries = 0;
     return "LOCKED\n";
   }
@@ -933,8 +941,6 @@ bool prepareDirectory(){
   return true;
 }
 
-
-
 std::string blacklist(std::string clientIP){
   std::ofstream file(mailSpool + "/blacklist.txt", std::ios::app);
 
@@ -953,6 +959,7 @@ std::string blacklist(std::string clientIP){
     std::cerr << "Error: Unable to open blacklist.txt for writing." << std::endl;
     return "ERR\n";
   }
+  
 }
 
 
