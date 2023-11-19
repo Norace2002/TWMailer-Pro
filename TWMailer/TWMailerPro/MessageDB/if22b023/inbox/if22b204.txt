@@ -1,6 +1,7 @@
 {1}
 if22b204
 if22b023
-NEw Subject
-Message blahblaha.
+Das ist ein Abschlusstest
+Und hier kommt der ganze
+Text ohne Abstand.
 {end of message}

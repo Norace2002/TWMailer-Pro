@@ -12,3 +12,10 @@ Hallo
 tetsetetedefrgf
 gergrge.
 {end of message}
+{3}
+if22b023
+if22b204
+Das ist ein Abschlusstest
+Und hier kommt der ganze
+Text ohne Abstand.
+{end of message}
