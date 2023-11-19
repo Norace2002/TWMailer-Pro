@@ -218,7 +218,7 @@ void SEND() {
   std::string sendMessage = newMessage.formatForSending();
   //TODO: remove
   std::cout << "Output format for sending: " << newMessage.formatForSending();
-  
+
   sendMessage = "SEND\n" + sendMessage;
   // Send the message
   response = sendToServer(sendMessage);
@@ -261,7 +261,7 @@ void READ() { std::cout << "\n";
   std::string prefix = "OK\n";
   if (response.substr(0, prefix.size()) == prefix) {
       response = response.substr(prefix.size());
-      Message readMessage(response); 
+      Message readMessage(response, "send"); 
       readMessage.printMessage();
   } else if (response == "ERR\n"){
       std::cout << "Read request unsuccessful. Please try again." << std::endl;
@@ -422,7 +422,7 @@ void testMessageCreation(){
   formattedForSending = firstMessage.formatForSending();
   formattedForSending = garbage + formattedForSending + garbage;
   
-  Message secondMessage = Message(formattedForSending);
+  Message secondMessage = Message(formattedForSending, "send");
   std::cout << "\nFirst Message: " << std::endl;
   firstMessage.printMessage();
   std::cout << "\nSecond Message: " << std::endl;

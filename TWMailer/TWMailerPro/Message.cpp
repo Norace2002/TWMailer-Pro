@@ -1,13 +1,17 @@
 #include "Message.h"
 
 // Construct from String
-Message::Message(std::string textContainingMessage) {
+Message::Message(std::string textContainingMessage, std::string method) {
   std::istringstream ss(textContainingMessage);
   char delimiter = '\n';
-
-  //std::string temp;
-  // Discard anything before
-  //std::getline(ss, temp, delimiter);
+  std::string temp;
+  
+  //only flush if Message is constructed from send format
+  if(method == "send"){   
+    // Discard anything before
+    std::getline(ss, temp, delimiter);
+  }
+  
   // Read and set the variables
   std::getline(ss, sender, delimiter);
   std::getline(ss, receiver, delimiter);

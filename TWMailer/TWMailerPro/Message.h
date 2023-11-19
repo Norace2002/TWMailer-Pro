@@ -10,7 +10,7 @@
 class Message {
 public:
     // Construct from string
-    Message(std::string textContainingMessage);
+    Message(std::string textContainingMessage, std::string method);
     // Construct with initializer list (only for debugging)
     Message(std::string messageID, std::string subject, std::string messageText, std::string sender, std::string receiver);
     // Construct from user input

@@ -247,8 +247,9 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     }
     // SEND
     else if (command == "SEND") {
+
       std::cout << "Buffer: " << buffer << std::endl;
-      Message ReceivedMessage(buffer);
+      Message ReceivedMessage(buffer, "send");
       //TODO: remove Debug
       std::cout << "Username of sender: " << username << std::endl;
       ReceivedMessage.setSender(username);
@@ -643,7 +644,7 @@ Message readMessageFromDB(int messageID, std::string filepath) {
   // Close file
   input_file.close(); 
 
-  Message foundMessage(content);
+  Message foundMessage(content, "read");
   std::cout << "Found Message:\n" << std::endl;
   foundMessage.printMessage();
 
