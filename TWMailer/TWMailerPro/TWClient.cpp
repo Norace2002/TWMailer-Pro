@@ -8,9 +8,6 @@
 #include <vector>
 #include <fstream>
 
-// Fork includes
-#include <sys/types.h>
-#include <sys/wait.h>
 
 // Folder navigation Linux
 #include <dirent.h>
@@ -29,7 +26,6 @@
 
 // User functions
 void userInterface();
-void userInterface2();
 std::string LOGIN();
 bool isLoggedIn();
 void SEND();
@@ -108,7 +104,7 @@ int main(int argc, char *argv[]) {
   }
   
   // Client-Server communication - Send prepared command to server
-  userInterface2();
+  userInterface();
 
   
   // CLOSES THE DESCRIPTOR
@@ -130,85 +126,9 @@ int main(int argc, char *argv[]) {
 
 
 
+
 // Take User input
 void userInterface(){
-  std::string command;
-  std::string loginReply;
-  bool isLoggedIn = false;
-
-  std::cout << "Welcome to TW-Mailer!" << std::endl;
-
-
-  //Try Login
-  while(isLoggedIn == false){
-    std::cout << "Valid commands are QUIT and LOGIN" << std::endl;
-    std::cout << ">> ";
-    std::cin >> command;
-    if(command == "LOGIN"){
-      loginReply = LOGIN();
-      if(loginReply == "OK\n"){
-        isLoggedIn = true;
-      }
-      else if(loginReply == "ERR\n"){
-        std::cout << "Login failed" << std::endl;
-      }
-      else if(loginReply == "LOCKED\n"){
-        std::cout << "You have been locked. Try again later." << std::endl;
-      }
-      else{
-        std::cout << "Server error: " << loginReply << std::endl;
-      }
-    }
-    else if (command == "QUIT") {
-      QUIT();
-      return;
-    }
-  }
-  
-
-  while (command != "QUIT"){
-    
-    std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT. (and TEST)" << std::endl;
-    std::cout << ">> ";
-    std::cin >> command;
-
-    // SEND
-    if (command == "SEND") {
-      SEND();
-    }
-    // LIST
-    else if (command == "LIST") {
-      LIST();
-    }
-    // READ
-    else if (command == "READ") {
-      READ();
-    }
-    // DEL
-    else if (command == "DEL") {
-      DEL();
-    }
-    // QUIT
-    else if (command == "QUIT") {
-      QUIT();
-    }
-    // TEST
-    else if (command == "TEST") {
-      TEST();
-    }
-    // Invalid input
-    else {
-      std::cout << "\nPlease choose a valid input!" << std::endl;
-      std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT." << std::endl;
-    }    
-  };
-}
-
-
-
-
-// Take User input
-void userInterface2(){
   std::string command;
   std::string loginReply;
 
@@ -294,12 +214,25 @@ bool isLoggedIn(){
 // Create a new message and send it to the server
 void SEND() {
   Message newMessage;
+  std::string response;
   std::string sendMessage = newMessage.formatForSending();
+  //TODO: remove
+  std::cout << "Output format for sending: " << newMessage.formatForSending();
+  
   sendMessage = "SEND\n" + sendMessage;
   // Send the message
-  sendToServer(sendMessage);
+  response = sendToServer(sendMessage);
+
+  //Output to console
+  if(response == "OK\n"){
+    std::cout << "Message Sent" << std::endl;
+  }
+  else{
+    std::cout << "Sending Message failed. Please try again!" << std::endl;
+  }
 }
-// Send prebuilt message
+
+// Send prebuilt message (for Testing)
 void SEND(Message message) {
   std::string sendMessage = message.formatForSending();
   sendMessage = "SEND\n" + sendMessage;
@@ -312,6 +245,7 @@ void SEND(Message message) {
 // Display a specific message of a specific user
 void READ() { std::cout << "\n"; 
   std::string readMessage = "READ\n";
+  std::string response;
   std::string messageID;
 
   // Get Input
@@ -321,7 +255,17 @@ void READ() { std::cout << "\n";
 
   // Build the READ request
   readMessage = readMessage + messageID + "\n";
-  sendToServer(readMessage);
+  response = sendToServer(readMessage);
+
+  //Output to console
+  std::string prefix = "OK\n";
+  if (response.substr(0, prefix.size()) == prefix) {
+      response = response.substr(prefix.size());
+      Message readMessage(response); 
+      readMessage.printMessage();
+  } else if (response == "ERR\n"){
+      std::cout << "Read request unsuccessful. Please try again." << std::endl;
+  }
 }
 
 
@@ -329,15 +273,19 @@ void READ() { std::cout << "\n";
 // List all messages of a specific user
 void LIST() {
   std::string listMessage = "LIST\n";
+  std::string response;
 
   // Build the LIST request
-  sendToServer(listMessage);
+  response = sendToServer(listMessage);
+  //Output to console
+  std::cout << response << std::endl;
 }
 
 // Delete a specific message of a specific user
 void DEL() {
   std::string delMessage = "DEL\n";
   std::string messageID;
+  std::string response;
 
   // Get Input
   std::cout << "\ndelete a specific message" << std::endl;
@@ -346,7 +294,15 @@ void DEL() {
 
   // Build the DEL request
   delMessage = delMessage + messageID + "\n";
-  sendToServer(delMessage);
+  response = sendToServer(delMessage);
+
+  //Output to console
+  if(response == "OK\n"){
+    std::cout << "Message deleted." << std::endl;
+  }
+  else{
+    std::cout << "Message deletion failed. Please try again." << std::endl;
+  }
 }
 
 std::string LOGIN(){
@@ -447,8 +403,10 @@ std::string sendToServer(std::string serverCommand){
     return "Server closed remote socket";
   }
   else{
+    /*
     std::cout << "\nServer Reply:" << std::endl;
     std::cout << buffer << std::endl;
+    */
     buffer[size] = '\0';
     return buffer;
   }

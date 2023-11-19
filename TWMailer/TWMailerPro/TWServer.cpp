@@ -247,6 +247,7 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     }
     // SEND
     else if (command == "SEND") {
+      std::cout << "Buffer: " << buffer << std::endl;
       Message ReceivedMessage(buffer);
       //TODO: remove Debug
       std::cout << "Username of sender: " << username << std::endl;
@@ -357,7 +358,7 @@ std::string LOGIN(std::string username, std::string password, char clientIP_char
     }
     ++loginTries;
     
-    if(loginTries >= 1){
+    if(loginTries >= 3){
       // write to blacklist when mutex is unlocked
       blacklistMutex.lock();
       blacklist(clientIP);
@@ -386,7 +387,8 @@ std::string LIST(std::string username) {
   
   if (!input_file.is_open()) {
     std::cerr << "Error: file couldn't be opened." << std::endl;
-    return "ERR\n";
+    //return 0 as defined in TWMailer Protocol
+    return "0";
   }
 
   //fill buffer string with every subject plus associated ID
@@ -575,6 +577,9 @@ std::string saveMsgToDB(Message message) {
 
     if (outputFile.is_open()) {
       // Write the message in the desired format using formatForSaving()
+      //TODO: remove debug
+      message.printMessage();
+
       outputFile << message.formatForSaving();
       outputFile.close();
       return "OK\n";

@@ -5,9 +5,9 @@ Message::Message(std::string textContainingMessage) {
   std::istringstream ss(textContainingMessage);
   char delimiter = '\n';
 
-  std::string temp;
+  //std::string temp;
   // Discard anything before
-  std::getline(ss, temp, delimiter);
+  //std::getline(ss, temp, delimiter);
   // Read and set the variables
   std::getline(ss, sender, delimiter);
   std::getline(ss, receiver, delimiter);
