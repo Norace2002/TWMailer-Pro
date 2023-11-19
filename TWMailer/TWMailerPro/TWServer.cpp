@@ -328,7 +328,7 @@ std::string LOGIN(std::string username, std::string password, char clientIP_char
   std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
   std::string clientIP = clientIP_char;
 
-if(isBlacklisted(clientIP)){
+if(!isBlacklisted(clientIP)){
   if(ldapAuthentication(username, password) == "OK\n"){
 
     isLogginIn = true;
@@ -337,7 +337,7 @@ if(isBlacklisted(clientIP)){
   }
   ++loginTries;
    
-  if(loginTries >= 3){
+  if(loginTries >= 1){
     // write to blacklist
     blacklist(clientIP);
     loginTries = 0;
@@ -346,6 +346,7 @@ if(isBlacklisted(clientIP)){
   return "ERR\n";
 }
 else{
+  std::cout << "on blacklist" << std::endl;
   return "LOCKED\n";
 }
 
@@ -960,22 +961,55 @@ bool isBlacklisted(std::string clientIP){
   std::ifstream file(mailSpool + "/blacklist.txt");
   std::ofstream tempFile(mailSpool + "/temp.txt");
   std::string line;
+  bool blacklisted = false;
+
+  //Get timestamp;
+  auto currentTime = std::chrono::system_clock::now();
+  auto timestampInSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime.time_since_epoch());
 
   // Copy first line without newline before
   if (file.is_open()) {
-    std::getline(file, line);
-    //check values
-    if(line == clientIP){
-      std::getline(file, line);
-      //verify time
+
+    while(std::getline(file, line) || !file.eof()){
+
+      //check values
+      if(line == clientIP){
+        std::getline(file, line);
+        blacklisted = true;
+
+        //verify time
+        if(timestampInSeconds.count() - std::stoi(line) < 30){
+          tempFile << clientIP << std::endl;
+          tempFile << line << std::endl;
+          
+        }
+        else{
+          blacklisted = false;
+        }
+      }
+      else{
+        tempFile << line << std::endl;
+      }
     }
 
+    
 
-    tempFile << line;
-    // Copy all other lines with a newline at the start
-    while(std::getline(file, line)) {
-      tempFile << "\n" << line;
+    //close file after adjustment
+    file.close();
+    tempFile.close();
+
+    //Replace original with temp file
+    // Delete original file 
+    if (remove((mailSpool + "/blacklist.txt").c_str()) != 0) {
+      std::cerr << "Error, removing the original file" << std::endl;
     }
+
+    // Rename temp file
+    if (rename((mailSpool + "/temp.txt").c_str(), (mailSpool + "/blacklist.txt").c_str()) != 0) {
+      std::cerr << "Error, rename the temp file" << std::endl;
+    }
+
   } 
+  return blacklisted;
 
 }

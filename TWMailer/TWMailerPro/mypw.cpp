@@ -70,6 +70,5 @@ std::string getpass()
         }
     }
     printf("\n");
-    std::cout << "Password: " << password << std::endl;
     return password;
 }
