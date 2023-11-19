@@ -61,6 +61,9 @@ void signalHandler(int sig);
 
 // Mutexes
 std::mutex blacklistMutex;
+std::mutex inboxMutex;
+std::mutex indexMutex;
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -358,9 +361,7 @@ std::string LOGIN(std::string username, std::string password, char clientIP_char
     //If User tries to login 3 times -> add user to blacklist.
     if(loginTries >= 3){
       // write to blacklist when mutex is unlocked
-      blacklistMutex.lock();
       blacklist(clientIP);
-      blacklistMutex.unlock();
 
       loginTries = 0;
       return "LOCKED\n";
@@ -380,6 +381,7 @@ std::string LOGIN(std::string username, std::string password, char clientIP_char
 //   <count of messages>
 //   <messageID>. <subject>
 std::string LIST(std::string username) {
+  std::lock_guard<std::mutex> lock(indexMutex);
   std::ifstream input_file(mailSpool + "/" + username + "/index.txt");
   int counter = 0;
   std::string line;
@@ -435,6 +437,7 @@ std::string READ(std::string username, std::string messageID){
 // Handles DEL request
 // Returns "OK\n" or "ERR\n"
 std::string DEL(std::string username, std::string messageID){
+  std::lock_guard<std::mutex> lock(inboxMutex);
 
   std::string accountPath = mailSpool + "/" + username;
   std::string line;
@@ -507,6 +510,9 @@ std::string DEL(std::string username, std::string messageID){
 // Takes a message object and creates an entry in the correct location
 // Returns "OK\n" or "ERR\n"
 std::string saveMsgToDB(Message message) {
+  std::lock_guard<std::mutex> lock1(indexMutex);
+  std::lock_guard<std::mutex> lock2(inboxMutex);
+
   if (message.messageVerify()) { // Validate message content
     
     // Get sender and receiver usernames
@@ -587,6 +593,8 @@ std::string saveMsgToDB(Message message) {
 
 // Creates a message object from a DB entry
 Message readMessageFromDB(int messageID, std::string filepath) {
+  std::lock_guard<std::mutex> lock(inboxMutex);
+  
   // filepath = ./MessageDB/*username*
   std::string newFilePath;
 
@@ -639,6 +647,7 @@ Message readMessageFromDB(int messageID, std::string filepath) {
 
 // Find the corresponding contact file to the input Index in index.txt
 std::string getUserByIndex(int index, std::string path) {
+  std::lock_guard<std::mutex> lock(indexMutex);
   // path = ./MessageDB/*username*
 
   std::ifstream input_file(path + "/index.txt"); // Get the relevant index file
@@ -673,7 +682,9 @@ std::string getUserByIndex(int index, std::string path) {
 
 // Fix indices in our index file if message is deleted
 std::string fixInidices(int messageID, std::string accountPath){
-  
+  std::lock_guard<std::mutex> lock1(indexMutex);
+
+
   std::string tempIndexPath = accountPath + "/temp.txt";
   std::string indexPath = accountPath + "/index.txt";
   std::string inboxPath = accountPath + "/inbox";
@@ -752,7 +763,6 @@ std::string fixInidices(int messageID, std::string accountPath){
   }
     
   // Fix indices in all contact files
-  
 
   // Open directory
   DIR* directory = opendir(inboxPath.c_str());
@@ -785,6 +795,7 @@ std::string fixInidices(int messageID, std::string accountPath){
 
 // Returns a new unique message ID by searching through the index file
 int newMessageID(Message message) {
+
   std::string filepath = mailSpool + "/" + message.getReceiver() + "/index.txt";
   // Open file in read mode
   std::ifstream input_file(filepath); 
@@ -828,6 +839,7 @@ int newMessageID(Message message) {
 //eg. 1, 2, 3, 5, 6
 //-> 1, 2, 3, 4, 5 
 std::string fixMessageID(std::string inboxPath, std::string filepath, int messageID) {
+
   // Open the file to adjust it
   std::ifstream file(filepath);
   std::string tempFilePath = inboxPath + "/temp.txt";
@@ -890,6 +902,7 @@ std::string fixMessageID(std::string inboxPath, std::string filepath, int messag
 //It's length is due the way deleting works
 //Basically we create another file and only copy the lines we want to keep. After that the old file is replaced
 void removeLastLine(std::string filepath, std::string filename) {
+  
   std::ifstream file(filepath + "/" + filename);
   std::ofstream tempFile(filepath + "/temp.txt");
   std::string line;
@@ -951,9 +964,11 @@ bool prepareDirectory(){
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
-
+//***
 //is called if user exceeds the 3 Tries mark and adds the UsersIP and the current timestamp
 std::string blacklist(std::string clientIP){
+  std::lock_guard<std::mutex> lock(blacklistMutex);
+
   std::ofstream file(mailSpool + "/blacklist.txt", std::ios::app);
 
   //sets the current time since 1970 in seconds
@@ -975,9 +990,11 @@ std::string blacklist(std::string clientIP){
 }
 
 
-
+//***
 //checks if user is stil blacklisted
 bool isBlacklisted(std::string clientIP){
+  std::lock_guard<std::mutex> lock(blacklistMutex);
+
   std::ifstream file(mailSpool + "/blacklist.txt");
   std::ofstream tempFile(mailSpool + "/temp.txt");
   std::string line;
