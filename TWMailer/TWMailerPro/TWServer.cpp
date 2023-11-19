@@ -23,6 +23,7 @@
 #include <fstream>
 #include <sys/stat.h> 
 #include <fcntl.h>
+#include <chrono>
 
 // Socket includes
 #include <arpa/inet.h>
@@ -37,12 +38,15 @@
 
 
 // Main Tasks
+bool prepareDirectory();
 std::string saveMsgToDB(Message MessageToSave);
 Message readMessageFromDB(int messageID, std::string filepath);
-std::string LOGIN(std::string username, std::string password);
+std::string LOGIN(std::string username, std::string password, char clientIP[INET_ADDRSTRLEN]);
 std::string LIST(std::string username);
 std::string READ(std::string username, std::string messageID);
 std::string DEL(std::string username, std::string messageID);
+std::string blacklist(std::string clientIP);
+bool isBlacklisted(std::string clientIP);
 // Index functions
 std::string getUserByIndex(int index, std::string path);
 std::string fixInidices(int messageID, std::string accountPath);
@@ -50,7 +54,7 @@ std::string fixMessageID(std::string inboxPath, std::string filepath, int messag
 void removeLastLine(std::string filepath, std::string filename);
 int newMessageID(Message message);
 // Communication
-void *clientCommunication(void *data);
+void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]);
 void signalHandler(int sig);
 
 
@@ -59,8 +63,8 @@ void signalHandler(int sig);
 int abortRequested = 0;
 int create_socket = -1;
 int new_socket = -1;
-std::string rootDirectory = "./";
-int loginTrys = 0;// TODO delete later
+std::string mailSpool = "./";
+int loginTries = 0;// TODO delete later
 bool isLogginIn = false; // TODO delete later
 
 //Input format: twmailer-server <port> <directory>
@@ -72,13 +76,16 @@ int main(int argc, char *argv[]) {
 
   std::string serverPort = argv[optind];
   if(argc == 3){
-    rootDirectory = argv[optind + 1];
+    mailSpool = argv[optind + 1];
   }
   int port = stoi(serverPort);
 
   socklen_t addrlen;
   struct sockaddr_in address, cliaddress;
   int reuseValue = 1;
+
+  //build directory structure
+  prepareDirectory();
 
   // SIGNAL HANDLER -- SIGINT (Interrup: ctrl+c)
   if (signal(SIGINT, signalHandler) == SIG_ERR) {
@@ -138,8 +145,15 @@ int main(int argc, char *argv[]) {
 
     // START CLIENT
     printf("Client connected from %s:%d...\n", inet_ntoa(cliaddress.sin_addr), ntohs(cliaddress.sin_port));
+
     // ----------- Threading later in this functions --------------
-    clientCommunication(&new_socket);
+
+    // Extract and print client IP address
+    char clientIP[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &(cliaddress.sin_addr), clientIP, INET_ADDRSTRLEN);
+    std::cout << "Client connected from IP: " << clientIP << std::endl;
+
+    clientCommunication(&new_socket, clientIP);
     new_socket = -1;
   }
 
@@ -160,7 +174,7 @@ int main(int argc, char *argv[]) {
 
 
 // Communication with client
-void *clientCommunication(void *data) {
+void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   char buffer[BUF];
   int size;
   int *current_socket = (int *)data;
@@ -220,7 +234,7 @@ void *clientCommunication(void *data) {
     if (command == "LOGIN") {
       std::getline(ss, username, delimiter);
       std::getline(ss, password, delimiter);
-      responseMessage = LOGIN(username, password);
+      responseMessage = LOGIN(username, password, clientIP);
     }
     // SEND
     else if (command == "SEND") {
@@ -306,22 +320,34 @@ void signalHandler(int sig) {
     exit(sig);
   }
 }
-// Handles LOGIN request
-std::string LOGIN(std::string username, std::string password){
-  std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
 
+
+
+// Handles LOGIN request
+std::string LOGIN(std::string username, std::string password, char clientIP_char[INET_ADDRSTRLEN]){
+  std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
+  std::string clientIP = clientIP_char;
+
+if(isBlacklisted(clientIP)){
   if(ldapAuthentication(username, password) == "OK\n"){
 
     isLogginIn = true;
 
     return "OK\n";
   }
-  ++loginTrys;
+  ++loginTries;
    
-  if(loginTrys >= 3){
+  if(loginTries >= 3){
+    // write to blacklist
+    blacklist(clientIP);
+    loginTries = 0;
     return "LOCKED\n";
   }
   return "ERR\n";
+}
+else{
+  return "LOCKED\n";
+}
 
 }
 
@@ -330,7 +356,7 @@ std::string LOGIN(std::string username, std::string password){
 //   <count of messages>
 //   <messageID>. <subject>
 std::string LIST(std::string username) {
-  std::ifstream input_file(rootDirectory + "/" + username + "/index.txt");
+  std::ifstream input_file(mailSpool + "/" + username + "/index.txt");
   int counter = 0;
   std::string line;
   std::string response = "";
@@ -364,7 +390,7 @@ std::string LIST(std::string username) {
 // or "ERR\n"
 std::string READ(std::string username, std::string messageID){
   // Build path
-  std::string path = rootDirectory + "/" + username;
+  std::string path = mailSpool + "/" + username;
   std::cout << path << std::endl;
   // Create message object from DB
   Message serverResponse = readMessageFromDB(std::stoi(messageID), path);
@@ -384,7 +410,7 @@ std::string READ(std::string username, std::string messageID){
 // Returns "OK\n" or "ERR\n"
 std::string DEL(std::string username, std::string messageID){
 
-  std::string accountPath = rootDirectory + "/" + username;
+  std::string accountPath = mailSpool + "/" + username;
   std::string line;
   std::string content;
   bool messageLines = false;    // Flag for message lines that are part of the message to be deleted
@@ -472,7 +498,7 @@ std::string saveMsgToDB(Message message) {
     struct stat st; // Library struct to help us check directories - see line 336
 
     // Create relevant paths
-    std::string userDirectory = rootDirectory + "/" + message.getReceiver();
+    std::string userDirectory = mailSpool + "/" + message.getReceiver();
     std::string inboxDirectory = userDirectory + "/inbox";
     std::string indexFilePath = userDirectory + "/index.txt";
 
@@ -519,7 +545,7 @@ std::string saveMsgToDB(Message message) {
     message.setMessageID(newID);
     
     // Construct the file path
-    filePath = rootDirectory + "/" + message.getReceiver() + "/inbox/" + message.getSender() + ".txt";
+    filePath = mailSpool + "/" + message.getReceiver() + "/inbox/" + message.getSender() + ".txt";
   
     // Open the file in append mode
     std::ofstream outputFile(filePath, std::ios::app);
@@ -746,7 +772,7 @@ std::string fixInidices(int messageID, std::string accountPath){
 
 // Returns a new unique message ID by searching through the index file
 int newMessageID(Message message) {
-  std::string filepath = rootDirectory + "/" + message.getReceiver() + "/index.txt";
+  std::string filepath = mailSpool + "/" + message.getReceiver() + "/index.txt";
   // Open file in read mode
   std::ifstream input_file(filepath); 
 
@@ -875,4 +901,78 @@ void removeLastLine(std::string filepath, std::string filename) {
   if (rename((filepath + "/temp.txt").c_str(), (filepath + "/" + filename).c_str()) != 0) {
     std::cerr << "Error, rename the temp file" << std::endl;
   }
+}
+
+
+
+//prepare Directory structure
+bool prepareDirectory(){
+  // Create Mail directory
+  if (mkdir(mailSpool.c_str(), 0777) == 0){
+    std::cout << "Created new directory: " << mailSpool << std::endl;
+  }
+  else{
+    std::cerr << "Error, new directory couldn't be created: " << mailSpool << "\nThis Directory might already exist." <<  std::endl;
+    return false;
+  }
+
+  std::string blacklistFilePath = mailSpool + "/blacklist.txt";
+  // Create index.txt
+  int fd = open(blacklistFilePath.c_str(), O_CREAT | O_WRONLY, 0777);
+  if (fd != -1) {
+    close(fd);
+    std::cout << "Created blacklist.txt" << std::endl;
+  }
+  else {
+    std::cerr << "Error, blacklist.txt couldn't be created" << std::endl;
+    return "ERR\n";
+  }
+
+
+  return true;
+}
+
+
+
+std::string blacklist(std::string clientIP){
+  std::ofstream file(mailSpool + "/blacklist.txt", std::ios::app);
+
+
+  auto currentTime = std::chrono::system_clock::now();
+  auto timestampInSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime.time_since_epoch());
+
+  if (file.is_open()) {
+    // Write the message in the desired format using formatForSaving()
+    file << clientIP << std::endl;
+    file << timestampInSeconds.count() << std::endl;
+    file.close();
+    return "OK\n";
+  } 
+  else {
+    std::cerr << "Error: Unable to open blacklist.txt for writing." << std::endl;
+    return "ERR\n";
+  }
+}
+
+
+
+bool isBlacklisted(std::string clientIP){
+  std::ifstream file(mailSpool + "/blacklist.txt");
+  std::ofstream tempFile(mailSpool + "/temp.txt");
+  std::string line;
+
+  // Copy first line without newline before
+  if (file.is_open()) {
+    std::getline(file, line);
+    //check values
+
+
+
+    tempFile << line;
+    // Copy all other lines with a newline at the start
+    while(std::getline(file, line)) {
+      tempFile << "\n" << line;
+    }
+  } 
+
 }
