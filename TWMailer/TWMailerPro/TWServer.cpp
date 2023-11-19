@@ -37,6 +37,7 @@
 // LDAP includes
 #include "myldap.h"
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 // Main Tasks
 bool prepareDirectory();
@@ -58,8 +59,10 @@ int newMessageID(Message message);
 void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]);
 void signalHandler(int sig);
 
-//Mutexes
+// Mutexes
 std::mutex blacklistMutex;
+
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 // Buffer & Globals
 #define BUF 1024
@@ -68,9 +71,10 @@ int create_socket = -1;
 int new_socket = -1;
 std::string mailSpool = "./";
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 //Input format: twmailer-server <port> <directory>
 //Test  command ./twmailer-server 6543 ./MessageDB
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 //############################################################################################
 int main(int argc, char *argv[]) {
@@ -176,7 +180,7 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 }
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 // Communication with client
 void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
@@ -185,11 +189,7 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   int *current_socket = (int *)data;
   int loginTries = 0;
   bool isLoggedIn = false;
-
   std::string username;
-
-  
-
 
   // SEND welcome message
   strcpy(buffer, "Connection to Server successful\r\n");
@@ -310,9 +310,9 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   return NULL;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
-
-// Handles Signals
+// Handles Signals C^
 void signalHandler(int sig) {
   if (sig == SIGINT) {
     std::cout << "abort Requested..." << std::endl;
@@ -343,13 +343,16 @@ void signalHandler(int sig) {
   }
 }
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 // Handles LOGIN request
 std::string LOGIN(std::string username, std::string password, char clientIP_char[INET_ADDRSTRLEN], bool& isLoggedIn, int& loginTries ){
+  
+  //checks if LDAP user input is viable
   std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
   std::string clientIP = clientIP_char;
 
+  //checks if IP adress is blacklisted
   if(!isBlacklisted(clientIP)){
     if(ldapAuthentication(username, password) == "OK\n"){
 
@@ -359,6 +362,7 @@ std::string LOGIN(std::string username, std::string password, char clientIP_char
     }
     ++loginTries;
     
+    //If User tries to login 3 times -> add user to blacklist.
     if(loginTries >= 3){
       // write to blacklist when mutex is unlocked
       blacklistMutex.lock();
@@ -375,6 +379,8 @@ std::string LOGIN(std::string username, std::string password, char clientIP_char
   }
 
 }
+
+
 
 // Handles LIST request
 // Returns:
@@ -407,6 +413,7 @@ std::string LIST(std::string username) {
 
   return response;
 }
+
 
 
 // Handles READ request
@@ -495,8 +502,6 @@ std::string DEL(std::string username, std::string messageID){
       return "ERR\n";
   }
 
-
-  //-----------------------------------------------------------------------
   // Fix indices in all files
   fixInidices(stoi(messageID), accountPath);
 
@@ -513,7 +518,7 @@ std::string DEL(std::string username, std::string messageID){
 }
 
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 // Takes a message object and creates an entry in the correct location
 // Returns "OK\n" or "ERR\n"
 std::string saveMsgToDB(Message message) {
@@ -600,7 +605,6 @@ std::string saveMsgToDB(Message message) {
 
 
 
-
 // Creates a message object from a DB entry
 Message readMessageFromDB(int messageID, std::string filepath) {
   // filepath = ./MessageDB/*username*
@@ -651,7 +655,7 @@ Message readMessageFromDB(int messageID, std::string filepath) {
   return foundMessage;
 }
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 // Find the corresponding contact file to the input Index in index.txt
 std::string getUserByIndex(int index, std::string path) {
@@ -685,9 +689,9 @@ std::string getUserByIndex(int index, std::string path) {
   return path + "/inbox/" + sender + ".txt";
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
-
-// Fix indices
+// Fix indices in our index file if message is deleted
 std::string fixInidices(int messageID, std::string accountPath){
   
   std::string tempIndexPath = accountPath + "/temp.txt";
@@ -823,7 +827,6 @@ int newMessageID(Message message) {
   }
 
   input_file.close(); // Close file
-
   
   // Open in append mode
   std::ofstream outputFile(filepath, std::ios::app); 
@@ -841,6 +844,9 @@ int newMessageID(Message message) {
 
 
 
+//corrects IDs so they fill in the gap created by a deleted message
+//eg. 1, 2, 3, 5, 6
+//-> 1, 2, 3, 4, 5 
 std::string fixMessageID(std::string inboxPath, std::string filepath, int messageID) {
   // Open the file to adjust it
   std::ifstream file(filepath);
@@ -862,7 +868,7 @@ std::string fixMessageID(std::string inboxPath, std::string filepath, int messag
           }
         }
         
-
+        //replace old with new ID
         if(stoi(id) > messageID){
           newID = stoi(id) - 1;
           tempFile << "{" << newID << "}" << std::endl;
@@ -871,7 +877,7 @@ std::string fixMessageID(std::string inboxPath, std::string filepath, int messag
           tempFile << line << std::endl;
         }
 
-        //reset id 
+        //reset id counter
         id = "";
       }
       else{
@@ -899,8 +905,10 @@ std::string fixMessageID(std::string inboxPath, std::string filepath, int messag
   return "OK\n";
 }
 
-
-
+//////////////////////////////////////////////////////////////////////////////////////////////
+//this function removes last \n an txt
+//It's length is due the way deleting works
+//Basically we create another file and only copy the lines we want to keep. After that the old file is replaced
 void removeLastLine(std::string filepath, std::string filename) {
   std::ifstream file(filepath + "/" + filename);
   std::ofstream tempFile(filepath + "/temp.txt");
@@ -932,7 +940,7 @@ void removeLastLine(std::string filepath, std::string filename) {
   }
 }
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 //prepare Directory structure
 bool prepareDirectory(){
@@ -945,8 +953,9 @@ bool prepareDirectory(){
     return false;
   }
 
+  // Create blacklist.txt
   std::string blacklistFilePath = mailSpool + "/blacklist.txt";
-  // Create index.txt
+
   int fd = open(blacklistFilePath.c_str(), O_CREAT | O_WRONLY, 0777);
   if (fd != -1) {
     close(fd);
@@ -961,12 +970,13 @@ bool prepareDirectory(){
   return true;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 
-
+//is called if user exceeds the 3 Tries mark and adds the UsersIP and the current timestamp
 std::string blacklist(std::string clientIP){
   std::ofstream file(mailSpool + "/blacklist.txt", std::ios::app);
 
-
+  //sets the current time since 1970 in seconds
   auto currentTime = std::chrono::system_clock::now();
   auto timestampInSeconds = std::chrono::duration_cast<std::chrono::seconds>(currentTime.time_since_epoch());
 
@@ -986,6 +996,7 @@ std::string blacklist(std::string clientIP){
 
 
 
+//checks if user is stil blacklisted
 bool isBlacklisted(std::string clientIP){
   std::ifstream file(mailSpool + "/blacklist.txt");
   std::ofstream tempFile(mailSpool + "/temp.txt");
@@ -1001,18 +1012,20 @@ bool isBlacklisted(std::string clientIP){
 
     while(std::getline(file, line) || !file.eof()){
 
-      //check values
+      //checks if this user is an blacklist
       if(line == clientIP){
         std::getline(file, line);
         blacklisted = true;
 
-        //verify time
-        if(timestampInSeconds.count() - std::stoi(line) < 30){
+        //checks if difference between current time and blacklisted time is greater than 60 seconds
+        //if yes -> deletes user from blacklist
+        if(timestampInSeconds.count() - std::stoi(line) < 60){
           tempFile << clientIP << std::endl;
           tempFile << line << std::endl;
           
         }
         else{
+          //sets blacklisted on false again if user is still blacklisted
           blacklisted = false;
         }
       }
