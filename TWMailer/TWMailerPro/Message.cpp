@@ -6,7 +6,7 @@ Message::Message(std::string textContainingMessage, std::string method) {
   char delimiter = '\n';
   std::string temp;
   
-  //only flush if Message is constructed from send format
+  // Only flush if Message is constructed from send format
   if(method == "send"){   
     // Discard anything before
     std::getline(ss, temp, delimiter);
