@@ -9,7 +9,7 @@ std::string ldapAuthentication(std::string username, std::string password)
    const int ldapVersion = LDAP_VERSION3;
 
    // read username (bash: export ldapuser=<yourUsername>)
-   char ldapBindUser[256]; // TODO: understand usage
+   char ldapBindUser[256]; 
    char rawLdapUser[128];
 
    // Save function input to char array
@@ -26,14 +26,6 @@ std::string ldapAuthentication(std::string username, std::string password)
    // Complete c String by using a  "\0"
    ldapBindPassword[sizeof(ldapBindPassword) - 1] = '\0';
 
-
-
-   /* search settings
-   const char *ldapSearchBaseDomainComponent = "dc=technikum-wien,dc=at";
-   const char *ldapSearchFilter = "(uid=if19b00*)";
-   ber_int_t ldapSearchScope = LDAP_SCOPE_SUBTREE;
-   const char *ldapSearchResultAttributes[] = {"uid", "cn", NULL};
-   */
    // general
    int rc = 0; // return code
 
