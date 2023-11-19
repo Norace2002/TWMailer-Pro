@@ -149,8 +149,8 @@ void Message::printMessage(){
     std::cout << "Message ID: " << messageID << std::endl;
   }
   std::cout << "Sent by " << sender << " to " << receiver << std::endl;
-  std::cout << "Subject:\t" << subject << std::endl;
-  std::cout << "Message Text:\t" << messageText << std::endl;
+  std::cout << "Subject:   " << subject << std::endl;
+  std::cout << "\nMessage Text:\n" << messageText << std::endl;
 }
 
 

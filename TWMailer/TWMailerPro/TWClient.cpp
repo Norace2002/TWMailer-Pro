@@ -146,7 +146,7 @@ void userInterface(){
 
   while (command != "QUIT"){
     if(isLoggedIn() == false){
-      std::cout << "Valid commands are QUIT and LOGIN" << std::endl;
+      std::cout << "\nValid commands are QUIT and LOGIN" << std::endl;
       std::cout << ">> ";
       std::cin >> command;
       if(command == "LOGIN"){
@@ -170,7 +170,7 @@ void userInterface(){
       }
     }
     else{
-      std::cout << "Valid commands are SEND, LIST, READ, DEL, QUIT. (and TEST)" << std::endl;
+      std::cout << "\nValid commands are SEND, LIST, READ, DEL, QUIT. (and TEST)" << std::endl;
       std::cout << ">> ";
       std::cin >> command;
 
