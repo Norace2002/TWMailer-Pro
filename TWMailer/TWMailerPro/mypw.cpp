@@ -35,6 +35,7 @@ int getch()
 
 std::string getpass()
 {
+    //hide password
     int show_asterisk = 1;
 
     const char BACKSPACE = 127;

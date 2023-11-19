@@ -23,14 +23,14 @@ Message::Message(std::string textContainingMessage, std::string method) {
   std::string line;
 
   while (std::getline(ss, line, delimiter)) {
-      if (line == ".") {
-          // Check if it's a standalone "."
-          if (messageText.empty() || messageText.back() == '\n') {
-              // End of message reached
-              break;
-          }
+    if (line == ".") {
+      // Check if it's a standalone "."
+      if (messageText.empty() || messageText.back() == '\n') {
+        // End of message reached
+        break;
       }
-      messageText += line + '\n';
+    }
+    messageText += line + '\n';
   }
 }
 
@@ -46,7 +46,7 @@ Message::Message(std::string messageID, std::string subject, std::string message
 // Construct from user input
 Message::Message(){
   while (std::cin.get() != '\n') {
-      // Discard characters until a newline character is found
+    // Discard characters until a newline character is found
   }
   
   // Get user input data
@@ -83,23 +83,23 @@ Message::Message(){
 
 // Getters
 std::string Message::getMessageID() const {
-    return messageID;
+  return messageID;
 }
 
 std::string Message::getSubject() const {
-    return subject;
+  return subject;
 }
 
 std::string Message::getMessageText() const {
-    return messageText;
+  return messageText;
 }
 
 std::string Message::getSender() const {
-    return sender;
+  return sender;
 }
 
 std::string Message::getReceiver() const {
-    return receiver;
+  return receiver;
 }
 
 
@@ -110,19 +110,19 @@ void Message::setMessageID(int newID) {
 }
 
 void Message::setSubject(const std::string& subject) {
-    this->subject = subject;
+  this->subject = subject;
 }
 
 void Message::setMessageText(const std::string& messageText) {
-    this->messageText = messageText;
+  this->messageText = messageText;
 }
 
 void Message::setSender(const std::string& sender) {
-    this->sender = sender;
+  this->sender = sender;
 }
 
 void Message::setReceiver(const std::string& receiver) {
-    this->receiver = receiver;
+  this->receiver = receiver;
 }
 
 
