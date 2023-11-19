@@ -1,6 +1,0 @@
-{1}
-
-Nino
-Subject
-MEssage.
-{end of message}

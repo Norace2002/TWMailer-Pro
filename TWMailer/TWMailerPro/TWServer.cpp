@@ -226,14 +226,11 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     }
 
     buffer[size] = '\0';
-    //TODO: remove debug
-    std::cout << "Message received: " << buffer << "\n" << std::endl;
 
     // Server Logic --------------------------------------------
     std::istringstream ss(buffer);
     char delimiter = '\n';
     std::string command;
-    std::string username;
     std::string password;
     std::string messageID;
     std::string path;
@@ -260,7 +257,6 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     }
     // LIST
     else if (command == "LIST") {
-      // Extract username
       responseMessage = LIST(username);
     }
     // READ
