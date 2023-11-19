@@ -149,14 +149,16 @@ int main(int argc, char *argv[]) {
     // START CLIENT
     printf("Client connected from %s:%d...\n", inet_ntoa(cliaddress.sin_addr), ntohs(cliaddress.sin_port));
 
-    // ----------- Threading later in this functions --------------
+    
 
     // Extract and print client IP address
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(cliaddress.sin_addr), clientIP, INET_ADDRSTRLEN);
     std::cout << "Client connected from IP: " << clientIP << std::endl;
-    
-    std::thread clientThread(clientCommunication, &new_socket, clientIP);
+
+    // ----------- Threading --------------
+    int thread_socket = new_socket;
+    std::thread clientThread(clientCommunication, &thread_socket, clientIP);
     clientThread.detach();  // Thread freigeben, um Ressourcen zu verwalten
     
     new_socket = -1;
@@ -940,6 +942,8 @@ bool prepareDirectory(){
 
   return true;
 }
+
+
 
 std::string blacklist(std::string clientIP){
   std::ofstream file(mailSpool + "/blacklist.txt", std::ios::app);
