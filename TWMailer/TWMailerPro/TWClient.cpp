@@ -262,6 +262,7 @@ void READ() { std::cout << "\n";
   if (response.substr(0, prefix.size()) == prefix) {  //checks for "OK\n" at the start of the response
     response = response.substr(prefix.size());        //removes the "OK\n" from the string
     Message readMessage(response, "read");            //constructs Message object
+    std::cout << std::endl;
     readMessage.printMessage();                       //prints the formatted message
   } else if (response == "ERR\n"){
     std::cout << "Read request unsuccessful. Please try again." << std::endl;
@@ -278,7 +279,7 @@ void LIST() {
   // Send the LIST request
   response = sendToServer(listMessage);
   // Output to console
-  std::cout << response << std::endl;
+  std::cout << "\nNumber of messages: " << response << std::endl;
 }
 
 

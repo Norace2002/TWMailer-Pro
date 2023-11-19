@@ -56,7 +56,7 @@ std::string fixMessageID(std::string inboxPath, std::string filepath, int messag
 void removeLastLine(std::string filepath, std::string filename);
 int newMessageID(Message message);
 // Communication
-void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]);
+void *clientCommunication(int current_socket, char clientIP[INET_ADDRSTRLEN]);
 void signalHandler(int sig);
 
 // Mutexes
@@ -156,11 +156,10 @@ int main(int argc, char *argv[]) {
     // Extract and print client IP address
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(cliaddress.sin_addr), clientIP, INET_ADDRSTRLEN);
-    std::cout << "Client connected from IP: " << clientIP << std::endl;
 
     // ----------- Threading --------------
     int thread_socket = new_socket;
-    std::thread clientThread(clientCommunication, &thread_socket, clientIP);
+    std::thread clientThread(clientCommunication, thread_socket, clientIP);
     clientThread.detach();  // Thread freigeben, um Ressourcen zu verwalten
     
     new_socket = -1;
@@ -183,17 +182,17 @@ int main(int argc, char *argv[]) {
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 // Communication with client
-void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
+void *clientCommunication(int current_socket, char clientIP[INET_ADDRSTRLEN]) {
   char buffer[BUF];
   int size;
-  int *current_socket = (int *)data;
+  //int *current_socket = (int *)data;
   int loginTries = 0;
   bool isLoggedIn = false;
   std::string username;
 
   // SEND welcome message
   strcpy(buffer, "Connection to Server successful\r\n");
-  if (send(*current_socket, buffer, strlen(buffer), 0) == -1) {
+  if (send(current_socket, buffer, strlen(buffer), 0) == -1) {
     perror("send failed");
     return NULL;
   }
@@ -201,7 +200,7 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   //#########################vvv Running Server vvv##############################################
   do {
     // Receive client command
-    size = recv(*current_socket, buffer, BUF - 1, 0);
+    size = recv(current_socket, buffer, BUF - 1, 0);
     if (size == -1) {
       if (abortRequested) {
         perror("recv error after aborted");
@@ -247,14 +246,8 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     }
     // SEND
     else if (command == "SEND") {
-
-      std::cout << "Buffer: " << buffer << std::endl;
       Message ReceivedMessage(buffer, "send");
-      //TODO: remove Debug
-      std::cout << "Username of sender: " << username << std::endl;
       ReceivedMessage.setSender(username);
-      //TODO: remove Debug
-      std::cout << "Sender in Message Object: " << ReceivedMessage.getSender() << std::endl;
       responseMessage = saveMsgToDB(ReceivedMessage);
     }
     // LIST
@@ -287,7 +280,7 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     // Complete c String by using a  "\0"
     responseCharArray[sizeof(responseCharArray) - 1] = '\0';
     // Send response to client
-    if (send(*current_socket, responseCharArray, BUF-2, 0) == -1) {
+    if (send(current_socket, responseCharArray, BUF-2, 0) == -1) {
       perror("send answer failed");
       return NULL;
     }
@@ -296,15 +289,15 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
 
   
   // Closes/frees the socket
-  if (*current_socket != -1) {
-    if (shutdown(*current_socket, SHUT_RDWR) == -1) {
+  if (current_socket != -1) {
+    if (shutdown(current_socket, SHUT_RDWR) == -1) {
       perror("shutdown new_socket");
     }
     
-    if (close(*current_socket) == -1) {
+    if (close(current_socket) == -1) {
       perror("close new_socket");
     }
-    *current_socket = -1;
+    current_socket = -1;
   }
 
   return NULL;
@@ -453,17 +446,13 @@ std::string DEL(std::string username, std::string messageID){
   std::string contactPath = getUserByIndex(stoi(messageID), accountPath);
   std::string tempPath = accountPath + "/inbox/temp.txt";
 
-  std::cout << "account Path: " << accountPath << std::endl;
-  std::cout << "contact Path: " << contactPath << std::endl;
-  std::cout << "tmp Path: " << tempPath << std::endl;
-
   // Create temp file - needed to remove message lines
   std::ofstream tempFile(tempPath);
 
   // Open file 
   std::ifstream input_file(contactPath);
   if (!input_file.is_open()) {
-    std::cerr << "Error: file couldn't be opened.(382)" << std::endl;
+    std::cerr << "Error: file couldn't be opened." << std::endl;
     return "ERR\n";
   }
   
@@ -477,7 +466,6 @@ std::string DEL(std::string username, std::string messageID){
       if (line == "{end of message}") {       // If we reached the end-tag
         messageLines = false;                 // Stop ignoring the message
         messageDeleted = true;                // Mark message as deleted
-        std::cout << "end of message recognized." << std::endl;
       }
     }
     else{                                     // Everything that shouldn't be deleted
@@ -505,9 +493,6 @@ std::string DEL(std::string username, std::string messageID){
   // Fix indices in all files
   fixInidices(stoi(messageID), accountPath);
 
-  std::cout << "Operation del succesfull" << std::endl;
-
-
   //Check if DEL was successful
   if(messageDeleted == true){
     return "OK\n";
@@ -526,7 +511,7 @@ std::string saveMsgToDB(Message message) {
     
     // Get sender and receiver usernames
     std::string filePath;
-    struct stat st; // Library struct to help us check directories - see line 336
+    struct stat st; // Library struct to help us check directories
 
     // Create relevant paths
     std::string userDirectory = mailSpool + "/" + message.getReceiver();
@@ -583,19 +568,14 @@ std::string saveMsgToDB(Message message) {
 
     if (outputFile.is_open()) {
       // Write the message in the desired format using formatForSaving()
-      //TODO: remove debug
-      message.printMessage();
-
       outputFile << message.formatForSaving();
       outputFile.close();
       return "OK\n";
-      
     } 
     else {
       std::cerr << "Error: Unable to open file for saving the message." << std::endl;
       return "ERR\n";
     }
-    
   }
   else {
     std::cerr << "Message corrupted." << std::endl;
