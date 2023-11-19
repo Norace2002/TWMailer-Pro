@@ -182,7 +182,6 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   int size;
   int *current_socket = (int *)data;
 
-  //
   int loginTries = 0;// TODO delete later
   bool isLoggedIn = false; // TODO delete later
 
