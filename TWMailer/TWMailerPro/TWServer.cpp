@@ -42,7 +42,7 @@
 bool prepareDirectory();
 std::string saveMsgToDB(Message MessageToSave);
 Message readMessageFromDB(int messageID, std::string filepath);
-std::string LOGIN(std::string username, std::string password, char clientIP[INET_ADDRSTRLEN], bool& isLoggedIn, int& loginTries);
+std::string LOGIN(std::string username, std::string password, char clientIP[INET_ADDRSTRLEN]);
 std::string LIST(std::string username);
 std::string READ(std::string username, std::string messageID);
 std::string DEL(std::string username, std::string messageID);
@@ -67,6 +67,8 @@ int abortRequested = 0;
 int create_socket = -1;
 int new_socket = -1;
 std::string mailSpool = "./";
+int loginTries = 0;// TODO delete later
+bool isLogginIn = false; // TODO delete later
 
 //Input format: twmailer-server <port> <directory>
 //Test  command ./twmailer-server 6543 ./MessageDB
@@ -147,14 +149,16 @@ int main(int argc, char *argv[]) {
     // START CLIENT
     printf("Client connected from %s:%d...\n", inet_ntoa(cliaddress.sin_addr), ntohs(cliaddress.sin_port));
 
-    // ----------- Threading later in this functions --------------
+    
 
     // Extract and print client IP address
     char clientIP[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(cliaddress.sin_addr), clientIP, INET_ADDRSTRLEN);
     std::cout << "Client connected from IP: " << clientIP << std::endl;
-    
-    std::thread clientThread(clientCommunication, &new_socket, clientIP);
+
+    // ----------- Threading --------------
+    int thread_socket = new_socket;
+    std::thread clientThread(clientCommunication, &thread_socket, clientIP);
     clientThread.detach();  // Thread freigeben, um Ressourcen zu verwalten
     
     new_socket = -1;
@@ -182,15 +186,18 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
   int size;
   int *current_socket = (int *)data;
 
+<<<<<<< HEAD
   int loginTries = 0;// TODO delete later
   bool isLoggedIn = false; // TODO delete later
 
+=======
+>>>>>>> f704b03dc71dca883cd592dd6ee4903ee0e38793
   // SEND welcome message
   strcpy(buffer, "Connection to Server successful\r\n");
   if (send(*current_socket, buffer, strlen(buffer), 0) == -1) {
     perror("send failed");
     return NULL;
-  } 
+  }
 
   //#########################vvv Running Server vvv##############################################
   do {
@@ -240,7 +247,7 @@ void *clientCommunication(void *data, char clientIP[INET_ADDRSTRLEN]) {
     if (command == "LOGIN") {
       std::getline(ss, username, delimiter);
       std::getline(ss, password, delimiter);
-      responseMessage = LOGIN(username, password, clientIP, isLoggedIn, loginTries);
+      responseMessage = LOGIN(username, password, clientIP);
     }
     // SEND
     else if (command == "SEND") {
@@ -330,14 +337,14 @@ void signalHandler(int sig) {
 
 
 // Handles LOGIN request
-std::string LOGIN(std::string username, std::string password, char clientIP_char[INET_ADDRSTRLEN], bool& isLoggedIn, int& loginTries){
+std::string LOGIN(std::string username, std::string password, char clientIP_char[INET_ADDRSTRLEN]){
   std::cout << "LDAP Output: " << ldapAuthentication(username, password) << std::endl;
   std::string clientIP = clientIP_char;
 
 if(!isBlacklisted(clientIP)){
   if(ldapAuthentication(username, password) == "OK\n"){
 
-    isLoggedIn = true;
+    isLogginIn = true;
 
     return "OK\n";
   }
@@ -941,6 +948,8 @@ bool prepareDirectory(){
 
   return true;
 }
+
+
 
 std::string blacklist(std::string clientIP){
   std::ofstream file(mailSpool + "/blacklist.txt", std::ios::app);
