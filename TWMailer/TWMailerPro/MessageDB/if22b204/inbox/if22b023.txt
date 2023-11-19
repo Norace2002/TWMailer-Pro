@@ -19,3 +19,22 @@ Das ist ein Abschlusstest
 Und hier kommt der ganze
 Text ohne Abstand.
 {end of message}
+{4}
+if22b023
+if22b204
+Test User 1
+tetedertgrfe
+frgrfedwefrgt.
+{end of message}
+{5}
+if22b023
+if22b204
+Test User 2
+sdefrtgfd fergfdwferg.
+{end of message}
+{6}
+if22b023
+if22b204
+Test User 2defdwefrg
+dfgh
+{end of message}
