@@ -261,7 +261,7 @@ void READ() { std::cout << "\n";
   std::string prefix = "OK\n";
   if (response.substr(0, prefix.size()) == prefix) {  //checks for "OK\n" at the start of the response
     response = response.substr(prefix.size());        //removes the "OK\n" from the string
-    Message readMessage(response, "send");            //constructs Message object
+    Message readMessage(response, "read");            //constructs Message object
     readMessage.printMessage();                       //prints the formatted message
   } else if (response == "ERR\n"){
     std::cout << "Read request unsuccessful. Please try again." << std::endl;
