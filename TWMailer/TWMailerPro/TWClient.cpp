@@ -24,29 +24,38 @@
 #include "mypw.h"
 
 
-// User functions
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Function Decalarations
+
+// UI functions
 void userInterface();
-std::string LOGIN();
-bool isLoggedIn();
 void SEND();
 void SEND(Message message);
 void READ();
 void LIST();
 void DEL();
 void QUIT();
-void TEST();
+
+// Login functions
+std::string LOGIN();
+bool isLoggedIn();
+
 // Server functions
 std::string sendToServer(std::string serverCommand);
+
 // Debug funcctions
+void TEST();
 void testMessageCreation();
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 // Buffer & Globals
 #define BUF 1024
 int SOCKET;
 
+//////////////////////////////////////////////////////////////////////////////////////////////
 // Input format: twmailer-client <ip> <port>
 // Test  command ./twmailer-client 127.0.0.1 6543
-
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 //############################################################################################
 int main(int argc, char *argv[]) {
@@ -125,7 +134,8 @@ int main(int argc, char *argv[]) {
 //###########################################################################################
 
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////
+// UI Functions
 
 // Take User input
 void userInterface(){
@@ -198,27 +208,15 @@ void userInterface(){
 }
 
 
-//checks if user is logged in with verified credentials on server
-bool isLoggedIn(){
-  std::string response = sendToServer("LOGINSTATUS\n");
-
-  if(response == "LOCKED\n"){
-    return false;
-  }
-  else if(response == "VERIFIED\n"){
-    return true;
-  }
-  return false;
-}
 
 // Create a new message and send it to the server
+// Print result
 void SEND() {
   Message newMessage;
   std::string response;
   std::string sendMessage = newMessage.formatForSending();
-  //TODO: remove
-  std::cout << "Output format for sending: " << newMessage.formatForSending();
 
+  // Construct protocol message
   sendMessage = "SEND\n" + sendMessage;
   // Send the message
   response = sendToServer(sendMessage);
@@ -231,6 +229,8 @@ void SEND() {
     std::cout << "Sending Message failed. Please try again!" << std::endl;
   }
 }
+
+
 
 // Send prebuilt message (for Testing)
 void SEND(Message message) {
@@ -257,14 +257,14 @@ void READ() { std::cout << "\n";
   readMessage = readMessage + messageID + "\n";
   response = sendToServer(readMessage);
 
-  //Output to console
+  //Output response to console
   std::string prefix = "OK\n";
-  if (response.substr(0, prefix.size()) == prefix) {
-      response = response.substr(prefix.size());
-      Message readMessage(response, "send"); 
-      readMessage.printMessage();
+  if (response.substr(0, prefix.size()) == prefix) {  //checks for "OK\n" at the start of the response
+    response = response.substr(prefix.size());        //removes the "OK\n" from the string
+    Message readMessage(response, "send");            //constructs Message object
+    readMessage.printMessage();                       //prints the formatted message
   } else if (response == "ERR\n"){
-      std::cout << "Read request unsuccessful. Please try again." << std::endl;
+    std::cout << "Read request unsuccessful. Please try again." << std::endl;
   }
 }
 
@@ -275,11 +275,13 @@ void LIST() {
   std::string listMessage = "LIST\n";
   std::string response;
 
-  // Build the LIST request
+  // Send the LIST request
   response = sendToServer(listMessage);
-  //Output to console
+  // Output to console
   std::cout << response << std::endl;
 }
+
+
 
 // Delete a specific message of a specific user
 void DEL() {
@@ -292,7 +294,7 @@ void DEL() {
   std::cout << "\nMessage Number: " << std::endl;
   std::cin >> messageID;
 
-  // Build the DEL request
+  // Build and send the DEL request
   delMessage = delMessage + messageID + "\n";
   response = sendToServer(delMessage);
 
@@ -305,6 +307,18 @@ void DEL() {
   }
 }
 
+
+
+// Close the server connection
+void QUIT() {
+  sendToServer("QUIT");
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Login functions
+
+// Gets user input for LDAP verification
 std::string LOGIN(){
   std::string loginMessage = "LOGIN\n";
   std::string username;
@@ -315,23 +329,85 @@ std::string LOGIN(){
 
   std::cin.clear();
   
-  //get password - invisible
+  // Get password - input invisible
   password = getpass();
 
   // Build the LOGIN request
   loginMessage = loginMessage + username + "\n" + password + "\n";
-  return sendToServer(loginMessage);
+  return sendToServer(loginMessage); //returns the server response
 }
+
+
+
+// Checks if user is logged in with verified LDAP credentials on server
+bool isLoggedIn(){
+  std::string response = sendToServer("LOGINSTATUS\n");
+
+  if(response == "VERIFIED\n"){
+    return true;
+  }
+  else if(response == "LOCKED\n"){
+    return false;
+  }
+  else{
+    return false;
+  }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Server Functions
+
+// Sends the input string to the server and listens to response
+std::string sendToServer(std::string serverCommand){
+  char buffer[BUF];
+  
+  // Save command to buffer
+  strncpy(buffer, serverCommand.c_str(), sizeof(buffer));
+  // Complete c String by appending "\0"
+  buffer[sizeof(buffer) - 1] = '\0';
   
 
+  // Remove newline from string at the end
+  int size = strlen(buffer);
+  if (buffer[size - 2] == '\r' && buffer[size - 1] == '\n'){
+    size -= 2;
+    buffer[size] = 0;
+  }
+  else if (buffer[size - 1] == '\n'){
+    --size;
+    buffer[size] = 0;
+  }
 
 
-// Close the server
-void QUIT() {
-  sendToServer("QUIT");
+  // Send buffer to server
+  if ((send(SOCKET, buffer, size, 0)) == -1) {
+    perror("send error");
+    return "send error";
+  }
+
+  // Answer from Server
+  size = recv(SOCKET, buffer, BUF - 1, 0);
+  if (size == -1){
+    // Error
+    perror("recv error");
+    return "recv error";
+  }
+  else if (size == 0){
+    // Socket closed
+    std::cout << "Server closed remote socket" << std::endl;
+    return "Server closed remote socket";
+  }
+  else{
+    // Success
+    buffer[size] = '\0';
+    return buffer;
+  }
 }
 
 
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Test functions
 
 // Automated test of functions
 void TEST(){
@@ -363,54 +439,6 @@ void TEST(){
 
 }
 
-
-
-// Sends the input string to the server and listens to response
-std::string sendToServer(std::string serverCommand){
-  char buffer[BUF];
-  
-  // Save command to buffer
-  strncpy(buffer, serverCommand.c_str(), sizeof(buffer));
-  // Complete c String by appending "\0"
-  buffer[sizeof(buffer) - 1] = '\0';
-  
-  int size = strlen(buffer);
-  // Remove newline from string at the end
-  if (buffer[size - 2] == '\r' && buffer[size - 1] == '\n'){
-    size -= 2;
-    buffer[size] = 0;
-  }
-  else if (buffer[size - 1] == '\n'){
-    --size;
-    buffer[size] = 0;
-  }
-
-
-  // Send buffer to server
-  if ((send(SOCKET, buffer, size, 0)) == -1) {
-    perror("send error");
-    return "send error";
-  }
-
-  // Answer from Server
-  size = recv(SOCKET, buffer, BUF - 1, 0);
-  if (size == -1){
-    perror("recv error");
-    return "recv error";
-  }
-  else if (size == 0){
-    std::cout << "Server closed remote socket" << std::endl;
-    return "Server closed remote socket";
-  }
-  else{
-    /*
-    std::cout << "\nServer Reply:" << std::endl;
-    std::cout << buffer << std::endl;
-    */
-    buffer[size] = '\0';
-    return buffer;
-  }
-}
 
 
 
