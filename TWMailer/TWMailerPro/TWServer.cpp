@@ -59,7 +59,7 @@ int newMessageID(Message message);
 void *clientCommunication(int current_socket, char clientIP[INET_ADDRSTRLEN]);
 void signalHandler(int sig);
 
-// Mutexes
+// Mutexes 
 std::mutex blacklistMutex;
 std::mutex inboxMutex;
 std::mutex indexMutex;
