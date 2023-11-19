@@ -965,7 +965,10 @@ bool isBlacklisted(std::string clientIP){
   if (file.is_open()) {
     std::getline(file, line);
     //check values
-
+    if(line == clientIP){
+      std::getline(file, line);
+      //verify time
+    }
 
 
     tempFile << line;
