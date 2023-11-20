@@ -1,0 +1,28 @@
+{1}
+if22b023
+if22b204
+Test 1
+sdefg
+dfgh
+{end of message}
+{2}
+if22b023
+if22b204
+Test 2
+sdfgh
+swdefrgthz
+defg
+{end of message}
+{3}
+if22b023
+if22b204
+Test 3
+Hallo das ist ein Test
+über mehrere Zeilen.
+{end of message}
+{4}
+if22b023
+if22b204
+Test 4
+Hallo und Tschüss
+{end of message}
